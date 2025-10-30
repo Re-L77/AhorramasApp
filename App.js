@@ -47,10 +47,11 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {/* Inicia con el login */}
-          {/* Hola */}
-
-        <Stack.Screen name="Login" component={LoginScreen} />// Pantalla de login
-        <Stack.Screen name="Register" component={RegisterScreen} />// Pantalla de registro
+        {/* Hola */}
+        <Stack.Screen name="Login" component={LoginScreen} />
+        // Pantalla de login
+        <Stack.Screen name="Register" component={RegisterScreen} />
+        // Pantalla de registro
         {/* Cuando el usuario inicia sesión */}
         <Stack.Screen name="MainTabs" component={MainTabs} />
       </Stack.Navigator>

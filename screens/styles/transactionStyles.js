@@ -11,10 +11,6 @@ export const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 40,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
     elevation: 3,
   },
   balanceContainer: {
@@ -169,10 +165,6 @@ export const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderWidth: 1,
     borderColor: "#F3F4F6",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
     elevation: 1,
   },
   transactionLeft: {
@@ -240,10 +232,7 @@ export const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 20,
-    shadowColor: "#1089ff",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+
     elevation: 6,
   },
   floatingButtonText: {
@@ -263,10 +252,6 @@ export const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 40,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
     elevation: 5,
   },
   loadingText: {
@@ -522,10 +507,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 24,
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
     elevation: 5,
   },
   deleteIconContainer: {

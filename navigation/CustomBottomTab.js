@@ -28,7 +28,7 @@ export function CustomBottomTab({ state, descriptors, navigation }) {
             if (name === "Inicio") return "home";
             if (name === "Transacciones") return "card";
             if (name === "Presupuestos") return "pie-chart";
-            if (name === "Configuración") return "settings";
+            if (name === "Perfil") return "settings";
             return "circle";
           };
 

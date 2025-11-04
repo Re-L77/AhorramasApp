@@ -6,16 +6,12 @@ import {
   TouchableOpacity,
   FlatList,
   Platform,
-  SafeAreaView,
   Modal,
   TextInput,
   Pressable,
-  ScrollView,
   Dimensions,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { BarChart } from "react-native-chart-kit";
-
+import { SafeAreaView } from "react-native-safe-area-context";
 let WebIcons;
 if (Platform.OS === "web") {
   WebIcons = require("react-icons/io5");
@@ -37,10 +33,9 @@ export default function BudgetScreen() {
   const [nuevaCategoria, setNuevaCategoria] = useState("");
   const [nuevoUsado, setNuevoUsado] = useState("");
   const [nuevoLimite, setNuevoLimite] = useState("");
-  const [error, setError] = useState(""); // 🔹 Para mostrar mensajes de validación
+  const [error, setError] = useState("");
 
   const agregarPresupuesto = () => {
-    // 🔸 Validaciones básicas
     if (!nuevaCategoria.trim()) {
       setError("Por favor, ingresa una categoría.");
       return;
@@ -61,10 +56,28 @@ export default function BudgetScreen() {
     setNuevaCategoria("");
     setNuevoUsado("");
     setNuevoLimite("");
-    setError(""); // limpia error al guardar
+    setError("");
   };
 
-  // 🎨 Datos para el gráfico de barras
+  // Calcular totales
+  const totalUsado = data.reduce((sum, item) => sum + item.usado, 0);
+  const totalLimite = data.reduce((sum, item) => sum + item.limite, 0);
+  const porcentajeUsado = (totalUsado / totalLimite) * 100;
+
+  // Colores para las categorías
+  const colors = {
+    Comida: "#F97316",
+    Transporte: "#06B6D4",
+    Hogar: "#8B5CF6",
+    Servicios: "#EC4899",
+    Educación: "#10B981",
+    Ahorro: "#6366F1",
+  };
+
+  const getColorForCategoria = (categoria) => {
+    return colors[categoria] || "#1089ff";
+  };
+
   const barData = {
     labels: data.map((item) => item.categoria),
     datasets: [
@@ -74,230 +87,753 @@ export default function BudgetScreen() {
     ],
   };
 
+  const pieData = data.map((item) => ({
+    name: item.categoria,
+    usado: item.usado,
+    color: getColorForCategoria(item.categoria),
+    legendFontColor: "#1F2937",
+    legendFontSize: 12,
+  }));
+
   const chartConfig = {
-    backgroundGradientFrom: "#fff",
-    backgroundGradientTo: "#fff",
-    color: (opacity = 1) => `rgba(16, 137, 255, ${opacity})`,
+    backgroundGradientFrom: "#FFFFFF",
+    backgroundGradientTo: "#F9FAFB",
+    color: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
     strokeWidth: 2,
-    barPercentage: 0.6,
+    barPercentage: 0.7,
+    useShadowColorFromDataset: false,
+    decimalPlaces: 0,
+    formatYLabel: (value) => `$${parseInt(value)}`,
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
-        <Text style={styles.title}>Presupuestos</Text>
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={data}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={
+          <>
+            {/* Header Card */}
+            <View style={styles.headerCard}>
+              <Text style={styles.headerTitle}>💰 Presupuestos</Text>
 
-        {/* 🧾 Lista de categorías */}
-        <FlatList
-          data={data}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-            const progreso = (item.usado / item.limite) * 100;
-            return (
-              <View style={styles.card}>
-                <View style={styles.row}>
-                  <Text style={styles.categoria}>{item.categoria}</Text>
-                  <Text style={styles.monto}>
-                    ${item.usado} / ${item.limite}
+              {/* Balance Highlight */}
+              <View style={styles.balanceContainer}>
+                <Text style={styles.balanceLabel}>Total Disponible</Text>
+                <Text style={styles.balanceAmount}>
+                  ${(totalLimite - totalUsado).toFixed(2)}
+                </Text>
+              </View>
+
+              {/* Stats */}
+              <View style={styles.statsRow}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Usado</Text>
+                  <Text style={[styles.statAmount, { color: "#1089ff" }]}>
+                    ${totalUsado.toFixed(2)}
                   </Text>
                 </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statLabel}>Total</Text>
+                  <Text style={[styles.statAmount, { color: "#6B7280" }]}>
+                    ${totalLimite.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
 
-                <View style={styles.progressContainer}>
+              {/* Progreso General */}
+              <View style={styles.progressGeneralContainer}>
+                <View style={styles.progressGeneralLabel}>
+                  <Text style={styles.progressLabel}>Progreso General</Text>
+                  <Text style={styles.progressPercent}>
+                    {porcentajeUsado.toFixed(0)}%
+                  </Text>
+                </View>
+                <View style={styles.progressBarContainer}>
                   <View
                     style={[
-                      styles.progressBar,
-                      { width: `${progreso}%`, backgroundColor: "#1089ff" },
+                      styles.progressBarFill,
+                      { width: `${porcentajeUsado}%` },
                     ]}
                   />
                 </View>
               </View>
-            );
-          }}
-        />
+            </View>
 
-        {/* 📊 Gráfico resumen */}
-        <Text style={styles.subtitle}>Comparación de uso</Text>
-        <BarChart
-          data={barData}
-          width={screenWidth - 20}
-          height={280}
-          yAxisLabel="$"
-          fromZero
-          chartConfig={chartConfig}
-          showValuesOnTopOfBars
-          style={{ marginVertical: 10, borderRadius: 12 }}
-        />
+            {/* Gráfico de Donitas */}
+            <View style={styles.chartContainer}>
+              <View style={styles.chartHeaderRow}>
+                <Text style={styles.chartTitle}>🍰 Distribución de Gastos</Text>
+                <Text style={styles.chartSubtitle}>
+                  proporción por categoría
+                </Text>
+              </View>
+              <View style={styles.donutChartWrapper}>
+                <View style={styles.donutContainer}>
+                  {data.map((item, index) => {
+                    const totalGastos = data.reduce(
+                      (sum, d) => sum + d.usado,
+                      0
+                    );
+                    const porcentaje = (item.usado / totalGastos) * 100;
+                    const itemColor = getColorForCategoria(item.categoria);
 
-        {/* 🟦 Botón flotante */}
-        <TouchableOpacity
-          style={styles.fab}
-          onPress={() => setModalVisible(true)}
-        >
-          {Platform.OS === "web" ? (
-            WebIcons?.IoAddCircleOutline ? (
-              <WebIcons.IoAddCircleOutline size={28} color="#fff" />
-            ) : (
-              <Text style={{ color: "#fff", fontSize: 28 }}>＋</Text>
-            )
-          ) : (
-            <Ionicons name="add" size={28} color="#fff" />
-          )}
-        </TouchableOpacity>
+                    return (
+                      <View
+                        key={item.id}
+                        style={[
+                          styles.donutSegment,
+                          {
+                            backgroundColor: itemColor,
+                            width: `${porcentaje}%`,
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+                </View>
+                <View style={styles.legendContainer}>
+                  {data.map((item, index) => {
+                    const totalGastos = data.reduce(
+                      (sum, d) => sum + d.usado,
+                      0
+                    );
+                    const porcentaje = (item.usado / totalGastos) * 100;
+                    const itemColor = getColorForCategoria(item.categoria);
 
-        {/* 🪟 Modal para agregar presupuesto */}
-        <Modal
-          animationType="slide"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Nuevo Presupuesto</Text>
-
-              {/* 🔴 Mensaje de error si falta algo */}
-              {error ? (
-                <Text style={styles.errorText}>{error}</Text>
-              ) : null}
-
-                <TextInput
-                  style={styles.input}
-                  placeholder="Categoría"
-                  placeholderTextColor="#888"
-                  value={nuevaCategoria}
-                  onChangeText={(text) => {
-                    setNuevaCategoria(text);
-                    setError("");
-                  }}
-                />
-
-                <TextInput
-                  style={styles.input}
-                  placeholder="Monto usado"
-                  placeholderTextColor="#888"
-                  keyboardType="numeric"
-                  value={nuevoUsado}
-                  onChangeText={(text) => {
-                    setNuevoUsado(text);
-                    setError("");
-                  }}
-                />
-
-                <TextInput
-                  style={styles.input}
-                  placeholder="Límite mensual"
-                  placeholderTextColor="#888"
-                  keyboardType="numeric"
-                  value={nuevoLimite}
-                  onChangeText={(text) => {
-                    setNuevoLimite(text);
-                    setError("");
-                  }}
-                />
-
-
-              <View style={styles.modalButtons}>
-                <Pressable
-                  style={[styles.modalButton, { backgroundColor: "#1089ff" }]}
-                  onPress={agregarPresupuesto}
-                >
-                  <Text style={styles.modalButtonText}>Guardar</Text>
-                </Pressable>
-
-                <Pressable
-                  style={[styles.modalButton, { backgroundColor: "#aaa" }]}
-                  onPress={() => {
-                    setModalVisible(false);
-                    setError("");
-                  }}
-                >
-                  <Text style={styles.modalButtonText}>Cancelar</Text>
-                </Pressable>
+                    return (
+                      <View key={index} style={styles.legendItem}>
+                        <View
+                          style={[
+                            styles.legendDot,
+                            { backgroundColor: itemColor },
+                          ]}
+                        />
+                        <Text style={styles.legendText}>
+                          {item.categoria}: {porcentaje.toFixed(1)}%
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
               </View>
             </View>
+          </>
+        }
+        renderItem={({ item }) => {
+          const progreso = (item.usado / item.limite) * 100;
+          const isOverBudget = progreso > 100;
+          const itemColor = getColorForCategoria(item.categoria);
+
+          return (
+            <View style={styles.budgetCard}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardCategoria}>{item.categoria}</Text>
+                <Text
+                  style={[
+                    styles.cardProgreso,
+                    isOverBudget && styles.cardProgresoOver,
+                    {
+                      borderColor: itemColor,
+                      backgroundColor: itemColor + "15",
+                    },
+                  ]}
+                >
+                  {progreso.toFixed(0)}%
+                </Text>
+              </View>
+
+              <View style={styles.cardMonto}>
+                <Text style={[styles.cardMontoUsado, { color: itemColor }]}>
+                  ${item.usado}
+                </Text>
+                <Text style={styles.cardMontoSeparator}>/</Text>
+                <Text style={styles.cardMontoLimite}>${item.limite}</Text>
+              </View>
+
+              <View style={styles.progressContainer}>
+                <View
+                  style={[
+                    styles.progressBar,
+                    {
+                      width: `${Math.min(progreso, 100)}%`,
+                      backgroundColor: isOverBudget ? "#DC2626" : itemColor,
+                    },
+                  ]}
+                />
+              </View>
+
+              {isOverBudget && (
+                <Text style={styles.overBudgetText}>
+                  ⚠️ Excedido por ${(item.usado - item.limite).toFixed(2)}
+                </Text>
+              )}
+            </View>
+          );
+        }}
+        ListFooterComponent={<View style={{ height: 120 }} />}
+        contentContainerStyle={styles.listContainer}
+        scrollEnabled={true}
+      />
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setModalVisible(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.fabText}>➕ Nuevo</Text>
+      </TouchableOpacity>
+
+      {/* Modal para agregar presupuesto */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Nuevo Presupuesto</Text>
+              <TouchableOpacity
+                onPress={() => setModalVisible(false)}
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <TextInput
+              style={styles.input}
+              placeholder="Categoría"
+              placeholderTextColor="#D1D5DB"
+              value={nuevaCategoria}
+              onChangeText={(text) => {
+                setNuevaCategoria(text);
+                setError("");
+              }}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Monto usado"
+              placeholderTextColor="#D1D5DB"
+              keyboardType="numeric"
+              value={nuevoUsado}
+              onChangeText={(text) => {
+                setNuevoUsado(text);
+                setError("");
+              }}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Límite mensual"
+              placeholderTextColor="#D1D5DB"
+              keyboardType="numeric"
+              value={nuevoLimite}
+              onChangeText={(text) => {
+                setNuevoLimite(text);
+                setError("");
+              }}
+            />
+
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={styles.cancelButton}
+                onPress={() => {
+                  setModalVisible(false);
+                  setError("");
+                }}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable style={styles.saveButton} onPress={agregarPresupuesto}>
+                <Text style={styles.saveButtonText}>Guardar</Text>
+              </Pressable>
+            </View>
           </View>
-        </Modal>
-      </ScrollView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#f4f6fb" },
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 15, color: "#333" },
-  subtitle: { fontSize: 18, fontWeight: "bold", marginTop: 15, color: "#333" },
-  card: {
-    backgroundColor: "#fff",
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 100,
+  },
+  headerCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#1F2937",
+    marginBottom: 12,
+  },
+  balanceContainer: {
+    backgroundColor: "#1089ff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  balanceLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.8)",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  balanceAmount: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginTop: 8,
+  },
+  statsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 16,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: "#F3F4F6",
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
-    elevation: 2,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
   },
-  row: { flexDirection: "row", justifyContent: "space-between" },
-  categoria: { fontSize: 16, fontWeight: "600", color: "#333" },
-  monto: { fontSize: 14, color: "#666" },
-  progressContainer: {
+  statLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#6B7280",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  statAmount: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 6,
+  },
+  progressGeneralContainer: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  progressGeneralLabel: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  progressLabel: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  progressPercent: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1089ff",
+  },
+  progressBarContainer: {
     height: 8,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 5,
-    marginTop: 10,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 4,
+    overflow: "hidden",
   },
-  progressBar: { height: "100%", borderRadius: 5 },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#1089ff",
+    borderRadius: 4,
+  },
+  budgetCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  cardCategoria: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  cardProgreso: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#059669",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: "#10B981",
+  },
+  cardProgresoOver: {
+    color: "#DC2626",
+    backgroundColor: "#FEE2E2",
+  },
+  cardMonto: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  cardMontoUsado: {
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  cardMontoSeparator: {
+    fontSize: 14,
+    color: "#9CA3AF",
+  },
+  cardMontoLimite: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  progressContainer: {
+    height: 6,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 3,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  progressBar: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  overBudgetText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#DC2626",
+    marginTop: 4,
+  },
+  chartContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 20,
+    marginTop: 20,
+    marginBottom: 20,
+    marginHorizontal: 2,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  chartHeaderRow: {
+    marginBottom: 16,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1F2937",
+    marginBottom: 4,
+  },
+  chartSubtitle: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#9CA3AF",
+  },
+  chartWrapper: {
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  chartWrapperCustom: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    gap: 14,
+  },
+  chartWrapperPie: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  chartContentWrapper: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  chartGrid: {
+    gap: 12,
+  },
+  chartGridItem: {
+    gap: 8,
+  },
+  chartGridHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  chartGridLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  chartGridAmount: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  chartGridBarContainer: {
+    height: 20,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 6,
+    overflow: "hidden",
+  },
+  chartGridBar: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  pieChartWrapper: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pieChartCenterWrapper: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: screenWidth - 80,
+  },
+  pieChartStyle: {
+    marginVertical: 0,
+    marginHorizontal: 0,
+  },
+  donutChartWrapper: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    alignItems: "center",
+    gap: 20,
+  },
+  donutContainer: {
+    width: "100%",
+    height: 30,
+    borderRadius: 15,
+    overflow: "hidden",
+    flexDirection: "row",
+    backgroundColor: "#E5E7EB",
+  },
+  donutSegment: {
+    height: "100%",
+  },
+  legendContainer: {
+    marginTop: 20,
+    width: "100%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 16,
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#1F2937",
+  },
+  chartItemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  chartItemLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1F2937",
+    minWidth: 90,
+  },
+  chartItemBarContainer: {
+    flex: 1,
+    height: 24,
+    backgroundColor: "#E5E7EB",
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  chartItemBar: {
+    height: "100%",
+    borderRadius: 6,
+  },
+  chartItemValue: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1F2937",
+    minWidth: 50,
+    textAlign: "right",
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 12,
+  },
+  chartPie: {
+    borderRadius: 12,
+    marginVertical: 0,
+  },
   fab: {
     position: "absolute",
-    bottom: 25,
-    right: 25,
+    right: 16,
+    bottom: Platform.OS === "ios" ? 30 : 20,
     backgroundColor: "#1089ff",
-    width: 55,
-    height: 55,
-    borderRadius: 30,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 5,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    shadowColor: "#1089ff",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 15,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "flex-end",
   },
   modalContent: {
-    width: "85%",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
-    elevation: 10,
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F3F4F6",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 15,
-    color: "#333",
-    textAlign: "center",
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+  },
+  closeButtonText: {
+    fontSize: 18,
+    color: "#6B7280",
   },
   input: {
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
+    borderColor: "#E5E7EB",
+    fontSize: 14,
+    color: "#1F2937",
+    marginBottom: 12,
   },
   errorText: {
-    color: "red",
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#DC2626",
+    marginBottom: 12,
     textAlign: "center",
-    marginBottom: 8,
   },
   modalButtons: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
+    gap: 12,
+    marginTop: 16,
   },
-  modalButton: {
+  cancelButton: {
     flex: 1,
-    padding: 10,
-    borderRadius: 8,
-    marginHorizontal: 5,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  modalButtonText: { color: "#fff", textAlign: "center", fontWeight: "bold" },
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#6B7280",
+  },
+  saveButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: "#1089ff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  saveButtonText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
 });

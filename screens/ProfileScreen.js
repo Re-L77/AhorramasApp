@@ -85,12 +85,6 @@ export default function ProfileScreen() {
   return (
     <View style={styles.safe}>
       <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logoBox} />
-          <Text style={styles.appName}>Ahorra +</Text>
-        </View>
-
         {/* Avatar */}
         <View style={styles.avatarContainer}>
           <View className="avatar" style={styles.avatar} />

@@ -77,7 +77,7 @@ export default function TransactionsScreen() {
     setTimeout(() => {
       setTransacciones(data);
       setLoading(false);
-    }, 300);
+    }, 50);
   }, []);
 
   const listaFiltrada = useMemo(() => {
@@ -236,113 +236,7 @@ export default function TransactionsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header Card */}
-      <View style={styles.headerCard}>
-        <Text style={{ fontSize: 28, fontWeight: "700", color: "#1F2937" }}>
-          Transacciones
-        </Text>
-
-        {/* Balance Highlight */}
-        <View style={styles.balanceContainer}>
-          <Text style={styles.balanceLabel}>Balance Total</Text>
-          <Text style={styles.balanceAmount}>
-            {formatCurrency(totals.balance)}
-          </Text>
-        </View>
-
-        {/* Stats */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Ingresos</Text>
-            <Text style={[styles.statAmount, { color: "#059669" }]}>
-              {formatCurrency(totals.ingresos)}
-            </Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Gastos</Text>
-            <Text style={[styles.statAmount, { color: "#DC2626" }]}>
-              {formatCurrency(totals.gastos)}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <TextInput
-          placeholder="🔍 Buscar categoría..."
-          placeholderTextColor="#D1D5DB"
-          style={styles.searchInput}
-          value={filtro}
-          onChangeText={setFiltro}
-        />
-        <Pressable
-          onPress={() => {
-            setFiltro("");
-            setTipoFiltro("Todos");
-            setOrdenamiento("reciente");
-          }}
-          style={styles.clearButton}
-        >
-          <Text style={{ fontSize: 16, color: "#6B7280" }}>✕</Text>
-        </Pressable>
-      </View>
-
-      {/* Filter Buttons */}
-      <View style={styles.filterRow}>
-        {["Todos", "Ingreso", "Gasto"].map((t) => (
-          <TouchableOpacity
-            key={t}
-            onPress={() => setTipoFiltro(t)}
-            style={[
-              styles.filterButton,
-              tipoFiltro === t && styles.filterButtonActive,
-            ]}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                tipoFiltro === t && styles.filterTextActive,
-              ]}
-            >
-              {t}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Sort Buttons */}
-      <View style={styles.sortContainer}>
-        <Text style={styles.sortLabel}>Ordenar por:</Text>
-        <View style={styles.sortButtonsRow}>
-          {[
-            { key: "reciente", label: "📅 Reciente" },
-            { key: "antiguo", label: "📅 Antiguo" },
-            { key: "mayorGasto", label: "📈 Mayor" },
-            { key: "menorGasto", label: "📉 Menor" },
-          ].map(({ key, label }) => (
-            <TouchableOpacity
-              key={key}
-              onPress={() => setOrdenamiento(key)}
-              style={[
-                styles.sortButton,
-                ordenamiento === key && styles.sortButtonActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.sortButtonText,
-                  ordenamiento === key && styles.sortButtonTextActive,
-                ]}
-              >
-                {label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Transaction List */}
+      {/* Transaction List with Header */}
       {listaFiltrada.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
@@ -353,6 +247,115 @@ export default function TransactionsScreen() {
         <FlatList
           data={listaFiltrada}
           keyExtractor={(item) => item.id.toString()}
+          ListHeaderComponent={
+            <>
+              {/* Header Card */}
+              <View style={styles.headerCard}>
+                <Text style={{ fontSize: 28, fontWeight: "700", color: "#1F2937" }}>
+                  💳 Transacciones
+                </Text>
+
+                {/* Balance Highlight */}
+                <View style={styles.balanceContainer}>
+                  <Text style={styles.balanceLabel}>Balance Total</Text>
+                  <Text style={styles.balanceAmount}>
+                    {formatCurrency(totals.balance)}
+                  </Text>
+                </View>
+
+                {/* Stats */}
+                <View style={styles.statsRow}>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Ingresos</Text>
+                    <Text style={[styles.statAmount, { color: "#059669" }]}>
+                      {formatCurrency(totals.ingresos)}
+                    </Text>
+                  </View>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Gastos</Text>
+                    <Text style={[styles.statAmount, { color: "#DC2626" }]}>
+                      {formatCurrency(totals.gastos)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Search Bar */}
+              <View style={styles.searchContainer}>
+                <TextInput
+                  placeholder="🔍 Buscar categoría..."
+                  placeholderTextColor="#D1D5DB"
+                  style={styles.searchInput}
+                  value={filtro}
+                  onChangeText={setFiltro}
+                />
+                <Pressable
+                  onPress={() => {
+                    setFiltro("");
+                    setTipoFiltro("Todos");
+                    setOrdenamiento("reciente");
+                  }}
+                  style={styles.clearButton}
+                >
+                  <Text style={{ fontSize: 16, color: "#6B7280" }}>✕</Text>
+                </Pressable>
+              </View>
+
+              {/* Filter Buttons */}
+              <View style={styles.filterRow}>
+                {["Todos", "Ingreso", "Gasto"].map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    onPress={() => setTipoFiltro(t)}
+                    style={[
+                      styles.filterButton,
+                      tipoFiltro === t && styles.filterButtonActive,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.filterText,
+                        tipoFiltro === t && styles.filterTextActive,
+                      ]}
+                    >
+                      {t}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Sort Buttons */}
+              <View style={styles.sortContainer}>
+                <Text style={styles.sortLabel}>Ordenar por:</Text>
+                <View style={styles.sortButtonsRow}>
+                  {[
+                    { key: "reciente", label: "📅 Reciente" },
+                    { key: "antiguo", label: "📅 Antiguo" },
+                    { key: "mayorGasto", label: "📈 Mayor" },
+                    { key: "menorGasto", label: "📉 Menor" },
+                  ].map(({ key, label }) => (
+                    <TouchableOpacity
+                      key={key}
+                      onPress={() => setOrdenamiento(key)}
+                      style={[
+                        styles.sortButton,
+                        ordenamiento === key && styles.sortButtonActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.sortButtonText,
+                          ordenamiento === key && styles.sortButtonTextActive,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </>
+          }
           renderItem={({ item }) => (
             <TransactionListItem
               item={item}

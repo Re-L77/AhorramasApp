@@ -53,7 +53,7 @@ export default function ProfileScreen() {
     setIsEditing(false);
   };
 
-  // Validación y “submit” del cambio de contraseña 
+  // Validación y “submit” del cambio de contraseña (simulado)
   const handleCambiarContrasena = () => {
     setPwError("");
     setPwOk("");
@@ -85,7 +85,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.safe}>
       <View style={styles.container}>
-        {/* Aquí iria el Header con logo */}
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoBox} />
           <Text style={styles.appName}>Ahorra +</Text>
@@ -254,16 +254,20 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
   container: {
-    flex: 1,
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-    alignSelf: "flex-start",
-  },
+  flex: 1,
+  alignItems: "center",
+  justifyContent: "center", // 🔹 centra verticalmente
+  paddingHorizontal: 20,
+  paddingBottom: 60, // 🔹 da aire en la parte inferior
+},
+header: {
+  flexDirection: "row",
+  alignItems: "center",
+  position: "absolute", // 🔹 mantiene el header arriba
+  top: Platform.OS === "android" ? StatusBar.currentHeight + 8 : 16,
+  left: 20,
+},
+
   logoBox: {
     width: 28,
     height: 28,
@@ -282,45 +286,47 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: COLORS.black,
-  },
+  width: 120,   // 🔹 tamaño más grande del avatar
+  height: 120,
+  borderRadius: 60,
+  backgroundColor: COLORS.black,
+  marginBottom: 10,
+},
   name: {
-    fontSize: 20,
-    color: COLORS.black,
-    fontWeight: "700",
-    marginTop: 8,
-  },
+  fontSize: 24, // 🔹 más grande
+  color: COLORS.black,
+  fontWeight: "700",
+  marginTop: 10,
+},
+
   email: {
-    fontSize: 14,
-    color: COLORS.black,
-    marginTop: 4,
-  },
+  fontSize: 16, //  un poco más grande
+  color: COLORS.black,
+  marginTop: 6,
+},
   phone: {
-    fontSize: 14,
-    color: COLORS.black,
-    marginTop: 2,
-  },
+  fontSize: 16,
+  color: COLORS.black,
+  marginTop: 4,
+},
   editButton: {
-    backgroundColor: COLORS.blueLight,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    marginTop: 24,
-  },
+  backgroundColor: COLORS.blueLight,
+  paddingVertical: 14, //  más alto
+  paddingHorizontal: 40, //  más ancho
+  borderRadius: 14,
+  marginTop: 28,
+},
   editButtonText: {
     color: COLORS.white,
     fontWeight: "700",
     fontSize: 16,
   },
   logoutText: {
-    color: COLORS.red,
-    fontWeight: "700",
-    fontSize: 15,
-    marginTop: 16,
-  },
+  color: COLORS.red,
+  fontWeight: "700",
+  fontSize: 16,
+  marginTop: 20,
+},
   editPanel: {
     width: "100%",
     marginTop: 12,

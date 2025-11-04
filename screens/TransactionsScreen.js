@@ -251,7 +251,9 @@ export default function TransactionsScreen() {
             <>
               {/* Header Card */}
               <View style={styles.headerCard}>
-                <Text style={{ fontSize: 28, fontWeight: "700", color: "#1F2937" }}>
+                <Text
+                  style={{ fontSize: 28, fontWeight: "700", color: "#1F2937" }}
+                >
                   💳 Transacciones
                 </Text>
 

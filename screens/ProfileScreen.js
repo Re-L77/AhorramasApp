@@ -7,7 +7,9 @@ import {
   Platform,
   StatusBar,
   TouchableOpacity,
+  Alert,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 const COLORS = {
   black: "#000000",
@@ -19,6 +21,7 @@ const COLORS = {
 };
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
   const [isEditing, setIsEditing] = useState(false);
   const [nombre, setNombre] = useState("Alex Martínez");
   const [correo, setCorreo] = useState("124056435@upq.edu.mx");
@@ -82,6 +85,27 @@ export default function ProfileScreen() {
   };
   // ----------------------------------------------------------
 
+  const handleLogout = () => {
+    Alert.alert("Cerrar sesión", "¿Estás seguro de que deseas cerrar sesión?", [
+      {
+        text: "Cancelar",
+        onPress: () => {},
+        style: "cancel",
+      },
+      {
+        text: "Cerrar sesión",
+        onPress: () => {
+          // Navegar de vuelta a Auth
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Auth" }],
+          });
+        },
+        style: "destructive",
+      },
+    ]);
+  };
+
   return (
     <View style={styles.safe}>
       <View style={styles.container}>
@@ -107,8 +131,11 @@ export default function ProfileScreen() {
               <Text style={styles.editButtonText}>Editar perfil</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity>
-              <Text style={styles.logoutText}>Cerrar sesión</Text>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutText}>🚪 Cerrar sesión</Text>
             </TouchableOpacity>
           </>
         ) : (
@@ -336,10 +363,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   logoutText: {
-    color: COLORS.red,
+    color: "#FFFFFF",
     fontWeight: "700",
     fontSize: 16,
+    textAlign: "center",
+  },
+  logoutButton: {
+    backgroundColor: "#DC2626",
     marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    alignItems: "center",
+    shadowColor: "#DC2626",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   editPanel: {
     width: "100%",

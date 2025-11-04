@@ -1,14 +1,18 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import AuthStack from "./AuthStack";
 import MainTabs from "./MainTabs";
 
-export default function RootNavigator() {
-  const userLogged = false; // cambiar a estado global (Redux, Context o AsyncStorage)
+const Stack = createNativeStackNavigator();
 
+export default function RootNavigator() {
   return (
     <NavigationContainer>
-      {userLogged ? <MainTabs /> : <AuthStack />}
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Auth" component={AuthStack} />
+        <Stack.Screen name="MainTabs" component={MainTabs} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

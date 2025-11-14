@@ -5,12 +5,18 @@ import { Ionicons } from "@expo/vector-icons";
 export function CustomBottomTab({ state, descriptors, navigation }) {
   const activeIndex = state.index;
 
+  // Badge counts (en una app real, esto vendría del estado global/context)
+  const badgeCounts = {
+    Notificaciones: 3,
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.tabsRow}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
+          const badgeCount = badgeCounts[route.name] || 0;
 
           const onPress = () => {
             const event = navigation.emit({
@@ -28,7 +34,8 @@ export function CustomBottomTab({ state, descriptors, navigation }) {
             if (name === "Inicio") return "home";
             if (name === "Transacciones") return "card";
             if (name === "Presupuestos") return "pie-chart";
-            if (name === "Configuración") return "settings";
+            if (name === "Notificaciones") return "notifications";
+            if (name === "Perfil") return "settings";
             return "circle";
           };
 
@@ -39,11 +46,20 @@ export function CustomBottomTab({ state, descriptors, navigation }) {
               onPress={onPress}
               activeOpacity={0.7}
             >
-              <Ionicons
-                name={getIcon(route.name)}
-                size={isFocused ? 28 : 22}
-                color={isFocused ? "#FFFFFF" : "#9CA3AF"}
-              />
+              <View style={styles.tabIconWrapper}>
+                <Ionicons
+                  name={getIcon(route.name)}
+                  size={isFocused ? 28 : 22}
+                  color={isFocused ? "#FFFFFF" : "#9CA3AF"}
+                />
+                {badgeCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>
+                      {badgeCount > 9 ? "9+" : badgeCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
           );
         })}
@@ -85,5 +101,29 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginBottom: 0,
+  },
+  tabIconWrapper: {
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  badge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: "#DC2626",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });

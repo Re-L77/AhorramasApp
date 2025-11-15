@@ -1,7 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Dimensions, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Dimensions,
+  FlatList,
+  TouchableOpacity,
+} from "react-native";
 import { PieChart, BarChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -20,36 +28,36 @@ const dataPie = [
     name: "Hogar",
     population: 40,
     color: colors.Hogar,
-    legendFontColor: "#333",
-    legendFontSize: 14,
+    legendFontColor: "#1F2937",
+    legendFontSize: 13,
   },
   {
     name: "Servicios",
     population: 20,
     color: colors.Servicios,
-    legendFontColor: "#333",
-    legendFontSize: 14,
+    legendFontColor: "#1F2937",
+    legendFontSize: 13,
   },
   {
     name: "Entretenimiento",
     population: 15,
     color: colors.Educación,
-    legendFontColor: "#333",
-    legendFontSize: 14,
+    legendFontColor: "#1F2937",
+    legendFontSize: 13,
   },
   {
     name: "Educación",
     population: 15,
     color: colors.Comida,
-    legendFontColor: "#333",
-    legendFontSize: 14,
+    legendFontColor: "#1F2937",
+    legendFontSize: 13,
   },
   {
     name: "Ahorro",
     population: 10,
     color: colors.Ahorro,
-    legendFontColor: "#333",
-    legendFontSize: 14,
+    legendFontColor: "#1F2937",
+    legendFontSize: 13,
   },
 ];
 
@@ -64,16 +72,19 @@ const dataBar = {
 };
 
 const chartConfig = {
-  backgroundGradientFrom: "#fff",
-  backgroundGradientTo: "#fff",
-  color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-  barPercentage: 0.5,
+  backgroundGradientFrom: "#FFFFFF",
+  backgroundGradientTo: "#FFFFFF",
+  color: (opacity = 1) => `rgba(31, 41, 55, ${opacity})`,
+  barPercentage: 0.6,
   decimalPlaces: 0,
+  strokeWidth: 2,
 };
 
 const DATA = [{ id: "1", title: "Item 1" }];
 
 export default function HomeScreen() {
+  const [expandedChart, setExpandedChart] = useState("pie");
+
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
@@ -81,77 +92,105 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <>
-            {/* Header Card */}
+            {/* Header Card - Minimalista */}
             <View style={styles.headerCard}>
-              <Text style={styles.headerTitle}>📊 Resumen General</Text>
+              <Text style={styles.headerGreeting}>📊 Resumen</Text>
 
-              {/* Balance Highlight */}
+              {/* Balance Principal - Lo más importante */}
               <View style={styles.balanceContainer}>
                 <Text style={styles.balanceLabel}>Balance Total</Text>
                 <Text style={styles.balanceAmount}>$1,000.00</Text>
               </View>
 
-              {/* Stats */}
-              <View style={styles.statsRow}>
-                <View style={styles.statBox}>
+              {/* Stats Esenciales - Solo 2 items */}
+              <View style={styles.statsGrid}>
+                <View style={styles.statCard}>
+                  <Text style={styles.statIcon}>📈</Text>
+                  <Text style={styles.statAmountIncome}>+$6,000</Text>
                   <Text style={styles.statLabel}>Ingresos</Text>
-                  <Text style={[styles.statAmount, { color: "#059669" }]}>
-                    $6,000.00
-                  </Text>
                 </View>
-                <View style={styles.statBox}>
+
+                <View style={styles.statCard}>
+                  <Text style={styles.statIcon}>📉</Text>
+                  <Text style={styles.statAmountExpense}>-$5,000</Text>
                   <Text style={styles.statLabel}>Gastos</Text>
-                  <Text style={[styles.statAmount, { color: "#DC2626" }]}>
-                    $5,000.00
-                  </Text>
                 </View>
               </View>
             </View>
 
-            {/* 🥧 Gráfico de pastel */}
-            <View style={styles.chartSection}>
-              <Text style={styles.chartTitle}>Distribución de Gastos</Text>
-              <PieChart
-                data={dataPie}
-                width={screenWidth - 60}
-                height={220}
-                chartConfig={chartConfig}
-                accessor={"population"}
-                backgroundColor={"transparent"}
-                paddingLeft={"10"}
-                absolute
-              />
+            {/* Chart Toggle - Limpio y simple */}
+            <View style={styles.chartsContainer}>
+              <View style={styles.chartToggleContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.chartToggleBtn,
+                    expandedChart === "pie" && styles.chartToggleBtnActive,
+                  ]}
+                  onPress={() => setExpandedChart("pie")}
+                >
+                  <Text
+                    style={[
+                      styles.chartToggleBtnText,
+                      expandedChart === "pie" && styles.chartToggleBtnTextActive,
+                    ]}
+                  >
+                    {expandedChart === "pie" ? "● Distribución" : "○ Distribución"}
+                  </Text>
+                </TouchableOpacity>
 
-              {/* 📊 Leyenda */}
-              <View style={styles.legendContainer}>
-                {dataPie.map((item) => (
-                  <View key={item.name} style={styles.legendItem}>
-                    <View
-                      style={[
-                        styles.legendColor,
-                        { backgroundColor: item.color },
-                      ]}
-                    />
-                    <Text style={styles.legendText}>{item.name}</Text>
-                    <Text style={styles.legendPercent}>{item.population}%</Text>
-                  </View>
-                ))}
+                <TouchableOpacity
+                  style={[
+                    styles.chartToggleBtn,
+                    expandedChart === "bar" && styles.chartToggleBtnActive,
+                  ]}
+                  onPress={() => setExpandedChart("bar")}
+                >
+                  <Text
+                    style={[
+                      styles.chartToggleBtnText,
+                      expandedChart === "bar" && styles.chartToggleBtnTextActive,
+                    ]}
+                  >
+                    {expandedChart === "bar" ? "● Comparativa" : "○ Comparativa"}
+                  </Text>
+                </TouchableOpacity>
               </View>
-            </View>
 
-            {/* 📈 Gráfico de barras */}
-            <View style={styles.chartSection}>
-              <Text style={styles.chartTitle}>Ingresos vs Gastos</Text>
-              <BarChart
-                data={dataBar}
-                width={screenWidth - 30}
-                height={250}
-                yAxisLabel="$"
-                chartConfig={chartConfig}
-                verticalLabelRotation={0}
-                showValuesOnTopOfBars
-                fromZero
-              />
+              {/* Pie Chart */}
+              {expandedChart === "pie" && (
+                <View style={styles.chartSection}>
+                  <View style={styles.chartWrapper}>
+                    <PieChart
+                      data={dataPie}
+                      width={screenWidth - 60}
+                      height={200}
+                      chartConfig={chartConfig}
+                      accessor={"population"}
+                      backgroundColor={"transparent"}
+                      paddingLeft={"10"}
+                      absolute
+                    />
+                  </View>
+                </View>
+              )}
+
+              {/* Bar Chart */}
+              {expandedChart === "bar" && (
+                <View style={styles.chartSection}>
+                  <View style={styles.chartWrapper}>
+                    <BarChart
+                      data={dataBar}
+                      width={screenWidth - 60}
+                      height={200}
+                      yAxisLabel="$"
+                      chartConfig={chartConfig}
+                      verticalLabelRotation={0}
+                      showValuesOnTopOfBars
+                      fromZero
+                    />
+                  </View>
+                </View>
+              )}
             </View>
           </>
         }
@@ -164,10 +203,15 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
-  listContainer: { paddingBottom: 20 },
+  container: {
+    flex: 1,
+    backgroundColor: "#F9FAFB",
+  },
+  listContainer: {
+    paddingBottom: 80,
+  },
 
-  // Header Card
+  // Header Card - Minimalista
   headerCard: {
     backgroundColor: "#FFFFFF",
     marginHorizontal: 15,
@@ -175,100 +219,129 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 2,
   },
-  headerTitle: {
-    fontSize: 24,
+  headerGreeting: {
+    fontSize: 22,
     fontWeight: "700",
     color: "#1F2937",
     marginBottom: 12,
   },
+
+  // Balance Container - Lo más importante
   balanceContainer: {
-    marginBottom: 14,
+    backgroundColor: "#1089ff",
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    marginBottom: 12,
   },
   balanceLabel: {
-    fontSize: 14,
-    color: "#6B7280",
+    fontSize: 12,
+    fontWeight: "600",
+    color: "rgba(255,255,255,0.9)",
     marginBottom: 4,
   },
   balanceAmount: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#1089ff",
+    color: "#FFFFFF",
   },
-  statsRow: {
+
+  // Stats Grid - Solo 2 items limpios
+  statsGrid: {
     flexDirection: "row",
-    justifyContent: "space-between",
     gap: 10,
   },
-  statBox: {
+  statCard: {
     flex: 1,
     backgroundColor: "#F3F4F6",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 10,
+    padding: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  statIcon: {
+    fontSize: 24,
+    marginBottom: 8,
   },
   statLabel: {
-    fontSize: 12,
-    color: "#6B7280",
-    marginBottom: 4,
-  },
-  statAmount: {
-    fontSize: 16,
+    fontSize: 11,
     fontWeight: "600",
+    color: "#6B7280",
+    marginTop: 4,
+  },
+  statAmountIncome: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#059669",
+  },
+  statAmountExpense: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#DC2626",
   },
 
-  // Chart Sections
-  chartSection: {
-    backgroundColor: "#FFFFFF",
+  // Charts Container
+  chartsContainer: {
     marginHorizontal: 15,
-    marginBottom: 15,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { wdataPieidth: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 20,
   },
-  chartTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1F2937",
+  chartToggleContainer: {
+    flexDirection: "row",
+    gap: 10,
     marginBottom: 12,
   },
-
-  // Legend
-  legendContainer: {
-    width: "100%",
-    marginTop: 16,
-  },
-  legendItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-    justifyContent: "space-between",
-  },
-  legendColor: {
-    width: 16,
-    height: 16,
-    borderRadius: 4,
-    marginRight: 10,
-  },
-  legendText: {
-    fontSize: 14,
-    color: "#333",
+  chartToggleBtn: {
     flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderWidth: 2,
+    borderColor: "#D1D5DB",
+    alignItems: "center",
   },
-  legendPercent: {
+  chartToggleBtnActive: {
+    backgroundColor: "#1089ff",
+    borderColor: "#1089ff",
+  },
+  chartToggleBtnText: {
     fontSize: 14,
-    fontWeight: "bold",
-    color: "#333",
+    fontWeight: "700",
+    color: "#1F2937",
+  },
+  chartToggleBtnTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+
+  // Chart Section
+  chartSection: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  chartWrapper: {
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
+    padding: 8,
   },
 });

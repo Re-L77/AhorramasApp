@@ -60,14 +60,14 @@ export function TransactionListItem({ item, onEdit, onDelete }) {
             style={styles.actionButton}
             onPress={() => onEdit(item)}
           >
-            <Text style={styles.actionButtonText}>✏</Text>
+            <Text style={styles.actionButtonText}>✏️</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.actionButton, styles.deleteButton]}
             onPress={() => onDelete(item.id, item.categoria)}
           >
             <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
-              🗑
+              🗑️
             </Text>
           </TouchableOpacity>
         </View>

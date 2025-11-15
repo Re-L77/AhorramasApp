@@ -37,7 +37,7 @@ export function TransactionListItem({ item, onEdit, onDelete }) {
               styles.transactionBadge,
               {
                 backgroundColor:
-                  item.tipo === "Ingreso" ? "#D1FAE5" : "#FEE2E2",
+                  item.tipo === "Ingreso" ? "#ECFDF5" : "#FEF2F2",
               },
             ]}
           >
@@ -45,7 +45,7 @@ export function TransactionListItem({ item, onEdit, onDelete }) {
               style={[
                 styles.transactionBadgeText,
                 {
-                  color: item.tipo === "Ingreso" ? "#059669" : "#DC2626",
+                  color: item.tipo === "Ingreso" ? "#0F766E" : "#7F1D1D",
                 },
               ]}
             >
@@ -53,25 +53,25 @@ export function TransactionListItem({ item, onEdit, onDelete }) {
             </Text>
           </View>
         </View>
-      </TouchableOpacity>
 
-      {/* Acciones - Editar y Eliminar */}
-      <View style={styles.transactionActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => onEdit(item)}
-        >
-          <Text style={styles.actionButtonText}>✏️</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={() => onDelete(item.id, item.categoria)}
-        >
-          <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
-            🗑️
-          </Text>
-        </TouchableOpacity>
-      </View>
+        {/* Botones de acciones - Compactos dentro del item */}
+        <View style={styles.transactionActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => onEdit(item)}
+          >
+            <Text style={styles.actionButtonText}>✏</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={() => onDelete(item.id, item.categoria)}
+          >
+            <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
+              🗑
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 }

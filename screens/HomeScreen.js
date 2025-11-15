@@ -113,7 +113,7 @@ export default function HomeScreen() {
               <Text style={styles.chartTitle}>Distribución de Gastos</Text>
               <PieChart
                 data={dataPie}
-                width={screenWidth - 30}
+                width={screenWidth - 60}
                 height={220}
                 chartConfig={chartConfig}
                 accessor={"population"}
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { wdataPieidth: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,

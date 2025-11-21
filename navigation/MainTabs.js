@@ -3,7 +3,7 @@ import HomeScreen from "../screens/HomeScreen";
 import TransactionsScreen from "../screens/TransactionsScreen";
 import BudgetScreen from "../screens/BudgetScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
-import ProfileScreen from "../screens/ProfileScreen";
+import ProfileStack from "./ProfileStack";
 import { CustomBottomTab } from "./CustomBottomTab";
 
 const Tab = createBottomTabNavigator();
@@ -21,7 +21,7 @@ export default function MainTabs() {
       <Tab.Screen name="Transacciones" component={TransactionsScreen} />
       <Tab.Screen name="Presupuestos" component={BudgetScreen} />
       <Tab.Screen name="Notificaciones" component={NotificationsScreen} />
-      <Tab.Screen name="Perfil" component={ProfileScreen} />
+      <Tab.Screen name="Perfil" component={ProfileStack} />
     </Tab.Navigator>
   );
 }

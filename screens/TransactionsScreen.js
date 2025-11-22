@@ -174,8 +174,8 @@ export default function TransactionsScreen() {
     // Si hay errores, mostrar alerta y no proceder
     if (errorCategoria || errorMonto) {
       const mensajes = [];
-      if (errorCategoria) mensajes.push(• ${errorCategoria});
-      if (errorMonto) mensajes.push(• ${errorMonto});
+      if (errorCategoria) mensajes.push(`- ${errorCategoria}`);
+      if (errorMonto) mensajes.push(`- ${errorMonto}`);
       Alert.alert("❌ Errores en el formulario", mensajes.join("\n"));
       return;
     }
@@ -376,7 +376,7 @@ export default function TransactionsScreen() {
         style={styles.floatingButton}
         activeOpacity={0.8}
       >
-        <Text style={styles.floatingButtonText}>➕ Nueva</Text>
+        <Text style={styles.floatingButtonText}>+ Nueva</Text>
       </TouchableOpacity>
 
       {/* MODALES */}

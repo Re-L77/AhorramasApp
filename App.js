@@ -7,13 +7,21 @@ import { DatabaseService } from "./database/DatabaseService";
 export default function App() {
   useEffect(() => {
     // Inicializar la base de datos cuando la app carga
-    DatabaseService.inicializarBaseDatos().then((result) => {
-      if (result.success) {
-        console.log("✅ Base de datos inicializada correctamente");
-      } else {
-        console.error("❌ Error al inicializar base de datos:", result.error);
+    const initDB = async () => {
+      try {
+        const result = await DatabaseService.inicializarBaseDatos();
+        if (result.success) {
+          const mode = result.mode === 'sqlite' ? 'SQLite' : 'localStorage';
+          console.log(`✅ Base de datos inicializada (Modo: ${mode})`);
+        } else {
+          console.warn("⚠️ Error al inicializar base de datos:", result.error);
+        }
+      } catch (error) {
+        console.error("❌ Error crítico al inicializar BD:", error);
       }
-    });
+    };
+
+    initDB();
   }, []);
 
   return (

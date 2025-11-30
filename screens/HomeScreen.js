@@ -74,6 +74,7 @@ const dataBar = {
 const chartConfig = {
   backgroundGradientFrom: "#FFFFFF",
   backgroundGradientTo: "#FFFFFF",
+<<<<<<< HEAD
   color: (opacity = 1) => `rgba(31, 41, 55, ${opacity})`,
   barPercentage: 0.6,
   decimalPlaces: 0,

@@ -15,11 +15,11 @@ import {
 import { useNavigation } from "@react-navigation/native";
 
 export default function RegisterScreen() {
-  const [nombre, setNombre] = useState("María García");
-  const [correo, setCorreo] = useState("maria@example.com");
-  const [contraseña, setContraseña] = useState("password456");
-  const [confirmar, setConfirmar] = useState("password456");
-  const [telefono, setTelefono] = useState("3105556789");
+  const [nombre, setNombre] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [contraseña, setContraseña] = useState("");
+  const [confirmar, setConfirmar] = useState("");
+  const [telefono, setTelefono] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
   const navigation = useNavigation();
@@ -91,94 +91,27 @@ export default function RegisterScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <Text style={styles.headerText}>AHORRA+</Text>
           </View>
-
           <View style={styles.formCard}>
             <Text style={styles.title}>Crear Cuenta</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Nombre de usuario"
-              placeholderTextColor="#9CA3AF"
-              value={nombre}
-              onChangeText={setNombre}
-              editable={!cargando}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Correo electrónico"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="email-address"
-              value={correo}
-              onChangeText={setCorreo}
-              editable={!cargando}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Contraseña"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry
-              value={contraseña}
-              onChangeText={setContraseña}
-              editable={!cargando}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Confirmar contraseña"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry
-              value={confirmar}
-              onChangeText={setConfirmar}
-              editable={!cargando}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Teléfono"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="phone-pad"
-              value={telefono}
-              onChangeText={setTelefono}
-              editable={!cargando}
-            />
-
-            <TouchableOpacity
-              style={[styles.button, cargando && styles.buttonDisabled]}
-              onPress={enviarDatos}
-              disabled={cargando}
-            >
-              <Text style={styles.buttonText}>
-                {cargando ? "Registrando..." : "Registrar"}
-              </Text>
+            <TextInput style={styles.input} placeholder="Nombre de usuario" placeholderTextColor="#9CA3AF" value={nombre} onChangeText={setNombre} editable={!cargando} />
+            <TextInput style={styles.input} placeholder="Correo electrónico" placeholderTextColor="#9CA3AF" keyboardType="email-address" value={correo} onChangeText={setCorreo} editable={!cargando} />
+            <TextInput style={styles.input} placeholder="Contraseña" placeholderTextColor="#9CA3AF" secureTextEntry value={contraseña} onChangeText={setContraseña} editable={!cargando} />
+            <TextInput style={styles.input} placeholder="Confirmar contraseña" placeholderTextColor="#9CA3AF" secureTextEntry value={confirmar} onChangeText={setConfirmar} editable={!cargando} />
+            <TextInput style={styles.input} placeholder="Teléfono" placeholderTextColor="#9CA3AF" keyboardType="phone-pad" value={telefono} onChangeText={setTelefono} editable={!cargando} />
+            <TouchableOpacity style={[styles.button, cargando && styles.buttonDisabled]} onPress={enviarDatos} disabled={cargando}>
+              <Text style={styles.buttonText}>{cargando ? "Registrando..." : "Registrar"}</Text>
             </TouchableOpacity>
-
-            {cargando && (
+            {cargando ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#1089ff" />
               </View>
-            )}
-
-            {mensaje && (
-              <Text
-                style={[styles.mensajeText, cargando && styles.mensajeLoading]}
-              >
-                {mensaje}
-              </Text>
-            )}
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
-              style={styles.loginLink}
-            >
+            ) : null}
+            {mensaje ? <Text style={[styles.mensajeText, cargando && styles.mensajeLoading]}>{mensaje}</Text> : null}
+            <TouchableOpacity onPress={() => navigation.navigate("Login")} style={styles.loginLink}>
               <Text style={styles.loginText}>
                 ¿Ya tienes cuenta?{" "}
                 <Text style={styles.loginTextBold}>Inicia sesión</Text>

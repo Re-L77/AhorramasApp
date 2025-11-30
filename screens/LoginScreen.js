@@ -19,10 +19,8 @@ import {
 export default function LoginScreen() {
   const [showSplash, setShowSplash] = useState(true);
   const [showFinalSplash, setShowFinalSplash] = useState(false);
-  const [nombre, setNombre] = useState("Juan Pérez");
-  const [contraseña, setContraseña] = useState("password123");
-  const [correo, setCorreo] = useState("juan@example.com");
-  const [telefono, setTelefono] = useState("3015551234");
+  const [correo, setCorreo] = useState("");
+  const [contraseña, setContraseña] = useState("");
   const [mensaje, setMensaje] = useState("");
   const navigation = useNavigation();
   const route = useRoute();
@@ -64,7 +62,7 @@ export default function LoginScreen() {
   }, [isFocused, route.params?.skipSplash]);
 
   const handleLogin = () => {
-    if (!nombre || !contraseña || !correo || !telefono) {
+    if (!correo || !contraseña) {
       Alert.alert("Error", "Por favor completa todos los campos.");
       setMensaje("Faltan campos por llenar");
       return;
@@ -74,12 +72,6 @@ export default function LoginScreen() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(correo)) {
       Alert.alert("Error", "Por favor ingresa un correo válido.");
-      return;
-    }
-
-    // Validar teléfono (al menos 10 dígitos)
-    if (telefono.replace(/\D/g, "").length < 10) {
-      Alert.alert("Error", "Por favor ingresa un teléfono válido.");
       return;
     }
 
@@ -127,63 +119,22 @@ export default function LoginScreen() {
       <View style={styles.header}>
         <Text style={styles.headerText}>AHORRA+</Text>
       </View>
-
       <View style={styles.formContainer}>
         <Text style={styles.title}>Inicio de Sesión</Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre"
-          placeholderTextColor="#9CA3AF"
-          value={nombre}
-          onChangeText={setNombre}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Correo"
-          placeholderTextColor="#9CA3AF"
-          keyboardType="email-address"
-          value={correo}
-          onChangeText={setCorreo}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Contraseña"
-          placeholderTextColor="#9CA3AF"
-          secureTextEntry
-          value={contraseña}
-          onChangeText={setContraseña}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Teléfono"
-          placeholderTextColor="#9CA3AF"
-          keyboardType="phone-pad"
-          value={telefono}
-          onChangeText={setTelefono}
-        />
-
+        <TextInput style={styles.input} placeholder="Correo electrónico" placeholderTextColor="#9CA3AF" keyboardType="email-address" value={correo} onChangeText={setCorreo} />
+        <TextInput style={styles.input} placeholder="Contraseña" placeholderTextColor="#9CA3AF" secureTextEntry value={contraseña} onChangeText={setContraseña} />
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Iniciar Sesión</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => navigation.navigate("ForgotPassword")}
-          style={styles.forgotPasswordLink}
-        >
+        <TouchableOpacity onPress={() => navigation.navigate("ForgotPassword")} style={styles.forgotPasswordLink}>
           <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => navigation.navigate("Register")}
-          style={styles.registerLink}
-        >
+        <TouchableOpacity onPress={() => navigation.navigate("Register")} style={styles.registerLink}>
           <Text style={styles.registroText}>
             ¿No tienes cuenta?{" "}
             <Text style={styles.registroTextBold}>Registrate aquí</Text>
           </Text>
         </TouchableOpacity>
-
         {mensaje ? <Text style={styles.mensajeText}>{mensaje}</Text> : null}
       </View>
     </SafeAreaView>

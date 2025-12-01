@@ -8,7 +8,9 @@ import { CustomBottomTab } from "./CustomBottomTab";
 
 const Tab = createBottomTabNavigator();
 
-export default function MainTabs() {
+export default function MainTabs({ route }) {
+  const userId = route?.params?.userId;
+
   return (
     <Tab.Navigator
       initialRouteName="Inicio"
@@ -17,11 +19,31 @@ export default function MainTabs() {
       })}
       tabBar={(props) => <CustomBottomTab {...props} />}
     >
-      <Tab.Screen name="Inicio" component={HomeScreen} />
-      <Tab.Screen name="Transacciones" component={TransactionsScreen} />
-      <Tab.Screen name="Presupuestos" component={BudgetScreen} />
-      <Tab.Screen name="Notificaciones" component={NotificationsScreen} />
-      <Tab.Screen name="Perfil" component={ProfileStack} />
+      <Tab.Screen
+        name="Inicio"
+        component={HomeScreen}
+        initialParams={{ userId }}
+      />
+      <Tab.Screen
+        name="Transacciones"
+        component={TransactionsScreen}
+        initialParams={{ userId }}
+      />
+      <Tab.Screen
+        name="Presupuestos"
+        component={BudgetScreen}
+        initialParams={{ userId }}
+      />
+      <Tab.Screen
+        name="Notificaciones"
+        component={NotificationsScreen}
+        initialParams={{ userId }}
+      />
+      <Tab.Screen
+        name="Perfil"
+        component={ProfileStack}
+        initialParams={{ userId }}
+      />
     </Tab.Navigator>
   );
 }

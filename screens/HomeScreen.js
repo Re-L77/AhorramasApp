@@ -119,15 +119,17 @@ export default function HomeScreen() {
   const cargarDatos = async () => {
     try {
       setCargando(true);
+      console.log('Cargando datos para userId:', userId);
 
       // Obtener transacciones del usuario
       const resultadoTransacciones = await TransactionController.obtenerTransacciones(userId);
+      console.log('Resultado transacciones:', resultadoTransacciones);
 
       // Obtener presupuestos del usuario
       const resultadoPresupuestos = await BudgetController.obtenerPresupuestos(userId);
 
-      if (resultadoTransacciones.success && resultadoTransacciones.data) {
-        const transacciones = resultadoTransacciones.data;
+      if (resultadoTransacciones.success && resultadoTransacciones.transacciones) {
+        const transacciones = resultadoTransacciones.transacciones;
 
         // Calcular totales
         let ingresos = 0;
@@ -186,9 +188,7 @@ export default function HomeScreen() {
       console.error("Error al cargar datos:", error);
       setCargando(false);
     }
-  };
-
-  return (
+  }; return (
     <SafeAreaView style={styles.container}>
       <FlatList
         data={DATA}

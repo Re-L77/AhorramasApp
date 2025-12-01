@@ -32,7 +32,9 @@ export default function NotificationsScreen() {
   const cargarNotificaciones = async () => {
     try {
       setCargando(true);
+      console.log('Cargando notificaciones para userId:', userId);
       const resultado = await NotificationController.obtenerNotificaciones(userId);
+      console.log('Resultado notificaciones:', resultado);
 
       if (resultado.success && resultado.notificaciones) {
         // Mapear notificaciones de BD a formato visual
@@ -41,9 +43,10 @@ export default function NotificationsScreen() {
           type: notif.tipo || "recordatorio",
           title: notif.titulo,
           message: notif.contenido,
-          timestamp: new Date(notif.fechaCreacion).toLocaleDateString(),
+          timestamp: new Date(notif.fechaCreacion).toLocaleDateString('es-ES'),
           read: notif.leida === 1,
           color: getColorByType(notif.tipo),
+          icon: getIconByType(notif.tipo),
         }));
 
         setNotifications(notificacionesFormateadas);
@@ -64,6 +67,17 @@ export default function NotificationsScreen() {
       ahorro: "#10B981",
     };
     return colores[tipo] || "#1089ff";
+  };
+
+  const getIconByType = (tipo) => {
+    const iconos = {
+      ingreso: "✅",
+      gasto: "📊",
+      presupuesto: "⚠️",
+      ahorro: "🎉",
+      recordatorio: "👋",
+    };
+    return iconos[tipo] || "📬";
   };
 
   const handleMarkAsRead = (id) => {
@@ -147,6 +161,8 @@ export default function NotificationsScreen() {
               <View
                 style={[styles.colorIndicator, { backgroundColor: item.color }]}
               />
+
+              <Text style={styles.notificationIcon}>{item.icon}</Text>
 
               <View style={styles.notificationContent}>
                 <Text style={styles.notificationTitle}>{item.title}</Text>
@@ -274,6 +290,10 @@ const styles = StyleSheet.create({
     width: 4,
     height: "100%",
     borderRadius: 2,
+    marginRight: 12,
+  },
+  notificationIcon: {
+    fontSize: 24,
     marginRight: 12,
   },
   notificationContent: {

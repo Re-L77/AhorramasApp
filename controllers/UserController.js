@@ -167,6 +167,54 @@ export class UserController {
   }
 
   /**
+   * Cambiar contraseña por correo (recuperación de contraseña)
+   */
+  static async cambiarContraseñaPorCorreo(correo, nuevaContraseña) {
+    try {
+      const usuario = await User.obtenerUsuarioPorCorreo(correo);
+
+      if (!usuario) {
+        throw new Error('Usuario no encontrado');
+      }
+
+      if (nuevaContraseña.length < 6) {
+        throw new Error('La nueva contraseña debe tener al menos 6 caracteres');
+      }
+
+      await User.cambiarContraseñaPorCorreo(correo, nuevaContraseña);
+
+      return {
+        success: true,
+        message: 'Contraseña actualizada correctamente'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Obtener todos los usuarios
+   */
+  static async obtenerUsuarios() {
+    try {
+      const usuarios = await User.obtenerTodos();
+
+      return {
+        success: true,
+        usuarios: usuarios
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
    * Eliminar cuenta de usuario
    */
   static async eliminarCuenta(userId) {

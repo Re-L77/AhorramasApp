@@ -376,7 +376,7 @@ export default function TransactionsScreen() {
         style={styles.floatingButton}
         activeOpacity={0.8}
       >
-        <Text style={styles.floatingButtonText}>➕ Nueva</Text>
+        <Text style={styles.floatingButtonText}>+ Nueva</Text>
       </TouchableOpacity>
 
       {/* MODALES */}

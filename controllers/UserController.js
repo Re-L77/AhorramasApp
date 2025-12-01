@@ -26,9 +26,18 @@ export class UserController {
 
       // Crear usuario
       const userId = await User.crearUsuario(nombre, correo, telefono, contraseña);
+
+      // Obtener el usuario creado para retornarlo
+      const usuarioCreado = await User.obtenerUsuarioPorId(userId);
+
       return {
         success: true,
-        userId,
+        usuario: {
+          id: usuarioCreado.id,
+          nombre: usuarioCreado.nombre,
+          correo: usuarioCreado.correo,
+          telefono: usuarioCreado.telefono
+        },
         message: 'Usuario registrado correctamente'
       };
     } catch (error) {
@@ -157,6 +166,54 @@ export class UserController {
       return {
         success: true,
         message: 'Contraseña actualizada correctamente'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Cambiar contraseña por correo (recuperación de contraseña)
+   */
+  static async cambiarContraseñaPorCorreo(correo, nuevaContraseña) {
+    try {
+      const usuario = await User.obtenerUsuarioPorCorreo(correo);
+
+      if (!usuario) {
+        throw new Error('Usuario no encontrado');
+      }
+
+      if (nuevaContraseña.length < 6) {
+        throw new Error('La nueva contraseña debe tener al menos 6 caracteres');
+      }
+
+      await User.cambiarContraseñaPorCorreo(correo, nuevaContraseña);
+
+      return {
+        success: true,
+        message: 'Contraseña actualizada correctamente'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Obtener todos los usuarios
+   */
+  static async obtenerUsuarios() {
+    try {
+      const usuarios = await User.obtenerTodos();
+
+      return {
+        success: true,
+        usuarios: usuarios
       };
     } catch (error) {
       return {

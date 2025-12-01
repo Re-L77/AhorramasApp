@@ -8,21 +8,24 @@ const Stack = createNativeStackNavigator();
 
 export default function AuthStack() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        animationEnabled: true,
+        cardStyle: { backgroundColor: "transparent" }
+      }}
+    >
       <Stack.Screen
         name="Login"
         component={LoginScreen}
-        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
-        options={{ title: "Crear Cuenta" }}
       />
       <Stack.Screen
         name="ForgotPassword"
         component={ForgotPasswordScreen}
-        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

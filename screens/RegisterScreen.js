@@ -13,18 +13,21 @@ import {
   ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { UserController } from "../controllers/UserController";
+import { useAuth } from "../hooks/useAuth";
 
 export default function RegisterScreen() {
-  const [nombre, setNombre] = useState("María García");
-  const [correo, setCorreo] = useState("maria@example.com");
-  const [contraseña, setContraseña] = useState("password456");
-  const [confirmar, setConfirmar] = useState("password456");
-  const [telefono, setTelefono] = useState("3105556789");
+  const [nombre, setNombre] = useState("Juan Pérez");
+  const [correo, setCorreo] = useState("juan.perez@example.com");
+  const [contraseña, setContraseña] = useState("password123");
+  const [confirmar, setConfirmar] = useState("password123");
+  const [telefono, setTelefono] = useState("1234567890");
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
   const navigation = useNavigation();
+  const { login } = useAuth();
 
-  const enviarDatos = () => {
+  const enviarDatos = async () => {
     if (
       nombre.trim() === "" ||
       correo.trim() === "" ||
@@ -65,10 +68,24 @@ export default function RegisterScreen() {
     setCargando(true);
     setMensaje("Registrando usuario...");
 
-    setTimeout(() => {
+    // Llamar al controlador para registrar
+    const resultado = await UserController.registrarUsuario(
+      nombre,
+      correo,
+      telefono,
+      contraseña
+    );
+
+    if (resultado.success) {
       setCargando(false);
-      Alert.alert("✅ Registro Exitoso", `Bienvenido ${nombre}!`);
+      Alert.alert("✅ Registro Exitoso", `¡Bienvenido ${nombre}!`);
       setMensaje("Iniciando sesión...");
+
+      // Activar la sesión con useAuth
+      login(resultado.usuario);
+
+      // Guardar el userId antes del timeout
+      const usuarioId = resultado.usuario.id;
 
       setTimeout(() => {
         // Limpiar campos
@@ -79,10 +96,14 @@ export default function RegisterScreen() {
         setTelefono("");
         setMensaje("");
 
-        // Navegar al login sin mostrar splash
-        navigation.navigate("Login", { skipSplash: true });
+        // Navegar al MainTabs directamente (ya autenticado)
+        navigation.navigate("MainTabs", { userId: usuarioId });
       }, 1500);
-    }, 2000);
+    } else {
+      setCargando(false);
+      Alert.alert("Error", resultado.error);
+      setMensaje("Error al registrar");
+    }
   };
 
   return (
@@ -91,94 +112,27 @@ export default function RegisterScreen() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <Text style={styles.headerText}>AHORRA+</Text>
           </View>
-
           <View style={styles.formCard}>
             <Text style={styles.title}>Crear Cuenta</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Nombre de usuario"
-              placeholderTextColor="#9CA3AF"
-              value={nombre}
-              onChangeText={setNombre}
-              editable={!cargando}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Correo electrónico"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="email-address"
-              value={correo}
-              onChangeText={setCorreo}
-              editable={!cargando}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Contraseña"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry
-              value={contraseña}
-              onChangeText={setContraseña}
-              editable={!cargando}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Confirmar contraseña"
-              placeholderTextColor="#9CA3AF"
-              secureTextEntry
-              value={confirmar}
-              onChangeText={setConfirmar}
-              editable={!cargando}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Teléfono"
-              placeholderTextColor="#9CA3AF"
-              keyboardType="phone-pad"
-              value={telefono}
-              onChangeText={setTelefono}
-              editable={!cargando}
-            />
-
-            <TouchableOpacity
-              style={[styles.button, cargando && styles.buttonDisabled]}
-              onPress={enviarDatos}
-              disabled={cargando}
-            >
-              <Text style={styles.buttonText}>
-                {cargando ? "Registrando..." : "Registrar"}
-              </Text>
+            <TextInput style={styles.input} placeholder="Nombre de usuario" placeholderTextColor="#9CA3AF" value={nombre} onChangeText={setNombre} editable={!cargando} />
+            <TextInput style={styles.input} placeholder="Correo electrónico" placeholderTextColor="#9CA3AF" keyboardType="email-address" value={correo} onChangeText={setCorreo} editable={!cargando} />
+            <TextInput style={styles.input} placeholder="Contraseña" placeholderTextColor="#9CA3AF" secureTextEntry value={contraseña} onChangeText={setContraseña} editable={!cargando} />
+            <TextInput style={styles.input} placeholder="Confirmar contraseña" placeholderTextColor="#9CA3AF" secureTextEntry value={confirmar} onChangeText={setConfirmar} editable={!cargando} />
+            <TextInput style={styles.input} placeholder="Teléfono" placeholderTextColor="#9CA3AF" keyboardType="phone-pad" value={telefono} onChangeText={setTelefono} editable={!cargando} />
+            <TouchableOpacity style={[styles.button, cargando && styles.buttonDisabled]} onPress={enviarDatos} disabled={cargando}>
+              <Text style={styles.buttonText}>{cargando ? "Registrando..." : "Registrar"}</Text>
             </TouchableOpacity>
-
-            {cargando && (
+            {cargando ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#1089ff" />
               </View>
-            )}
-
-            {mensaje && (
-              <Text
-                style={[styles.mensajeText, cargando && styles.mensajeLoading]}
-              >
-                {mensaje}
-              </Text>
-            )}
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
-              style={styles.loginLink}
-            >
+            ) : null}
+            {mensaje ? <Text style={[styles.mensajeText, cargando && styles.mensajeLoading]}>{mensaje}</Text> : null}
+            <TouchableOpacity onPress={() => navigation.navigate("Login")} style={styles.loginLink}>
               <Text style={styles.loginText}>
                 ¿Ya tienes cuenta?{" "}
                 <Text style={styles.loginTextBold}>Inicia sesión</Text>

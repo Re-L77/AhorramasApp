@@ -9,12 +9,13 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useAuth } from "../hooks/useAuth";
 import { Notification } from "../models/Notification";
 
 export default function NotificationsScreen() {
   const { usuario } = useAuth();
+  const navigation = useNavigation();
   const [notifications, setNotifications] = useState([]);
   const [cargando, setCargando] = useState(true);
 
@@ -28,10 +29,42 @@ export default function NotificationsScreen() {
     React.useCallback(() => {
       // Recargar notificaciones cada vez que la pantalla obtiene el foco
       if (usuario?.id) {
-        cargarNotificaciones();
+        cargarNotificacionesSilencioso();
       }
     }, [usuario?.id])
   );
+
+  const cargarNotificacionesSilencioso = async () => {
+    try {
+      if (!usuario?.id) {
+        return;
+      }
+
+      const notificacionesData = await Notification.obtenerNotificacionesUsuario(usuario.id);
+
+      if (notificacionesData && Array.isArray(notificacionesData)) {
+        // Mapear notificaciones de BD a formato visual
+        const notificacionesFormateadas = notificacionesData.map((notif) => ({
+          id: notif.id?.toString() || Date.now().toString(),
+          type: notif.tipo || "recordatorio",
+          title: notif.titulo || "Notificación",
+          message: notif.descripcion || notif.contenido || "",
+          timestamp: new Date(notif.fecha).toLocaleDateString('es-ES'),
+          fecha: new Date(notif.fecha), // Para ordenamiento
+          read: notif.leida === 1,
+          color: getColorByType(notif.tipo),
+          icon: getIconByType(notif.tipo),
+        }));
+
+        // Ordenar de más reciente a más antigua
+        notificacionesFormateadas.sort((a, b) => b.fecha - a.fecha);
+
+        setNotifications(notificacionesFormateadas);
+      }
+    } catch (error) {
+      console.error("Error al cargar notificaciones:", error);
+    }
+  };
 
   const cargarNotificaciones = async () => {
     try {
@@ -105,34 +138,61 @@ export default function NotificationsScreen() {
 
   const handleMarkAsRead = async (id) => {
     try {
-      await Notification.marcarComoLeida(parseInt(id));
-      setNotifications(
-        notifications.map((notif) =>
-          notif.id === id ? { ...notif, read: true } : notif
-        )
+      // Actualizar UI inmediatamente
+      const nuevasNotificaciones = notifications.map((notif) =>
+        notif.id === id ? { ...notif, read: true } : notif
       );
+      setNotifications(nuevasNotificaciones);
+
+      // Actualizar conteo de no leídas
+      const noLeidas = nuevasNotificaciones.filter((n) => !n.read).length;
+      navigation.setParams({ notificationsUpdated: Date.now(), unreadCount: noLeidas });
+
+      // Luego actualizar en BD
+      await Notification.marcarComoLeida(parseInt(id));
     } catch (error) {
       console.error("Error al marcar como leída:", error);
+      // Recargar si hay error
+      cargarNotificaciones();
     }
   };
 
   const handleDelete = async (id) => {
     try {
+      // Actualizar UI inmediatamente
+      const nuevasNotificaciones = notifications.filter((notif) => notif.id !== id);
+      setNotifications(nuevasNotificaciones);
+
+      // Actualizar conteo de no leídas
+      const noLeidas = nuevasNotificaciones.filter((n) => !n.read).length;
+      navigation.setParams({ notificationsUpdated: Date.now(), unreadCount: noLeidas });
+
+      // Luego eliminar de BD
       await Notification.eliminarNotificacion(parseInt(id));
-      setNotifications(notifications.filter((notif) => notif.id !== id));
     } catch (error) {
       console.error("Error al eliminar notificación:", error);
+      // Recargar si hay error
+      cargarNotificaciones();
     }
   };
 
   const handleMarkAllAsRead = async () => {
     try {
+      // Actualizar UI inmediatamente
+      const nuevasNotificaciones = notifications.map((notif) => ({ ...notif, read: true }));
+      setNotifications(nuevasNotificaciones);
+
+      // Usar setParams para forzar re-render del padre
+      navigation.setParams({ notificationsUpdated: Date.now(), unreadCount: 0 });
+
+      // Luego actualizar en BD
       if (usuario?.id) {
         await Notification.marcarTodasComoLeidas(usuario.id);
-        setNotifications(notifications.map((notif) => ({ ...notif, read: true })));
       }
     } catch (error) {
       console.error("Error al marcar todas como leídas:", error);
+      // Recargar si hay error
+      cargarNotificaciones();
     }
   };
 

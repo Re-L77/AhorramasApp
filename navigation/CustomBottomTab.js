@@ -2,12 +2,12 @@ import React from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-export function CustomBottomTab({ state, descriptors, navigation }) {
+export function CustomBottomTab({ state, descriptors, navigation, notificationCount = 0 }) {
   const activeIndex = state.index;
 
-  // Badge counts (en una app real, esto vendría del estado global/context)
+  // Badge counts (dinámico desde props)
   const badgeCounts = {
-    Notificaciones: 3,
+    Notificaciones: notificationCount,
   };
 
   return (
@@ -22,7 +22,7 @@ export function CustomBottomTab({ state, descriptors, navigation }) {
             const event = navigation.emit({
               type: "tabPress",
               target: route.key,
-              preventDefault: () => {},
+              preventDefault: () => { },
             });
 
             if (!isFocused && !event.defaultPrevented) {

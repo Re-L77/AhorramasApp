@@ -7,6 +7,7 @@
 
 import { Platform } from 'react-native';
 import * as SQLite from 'expo-sqlite';
+import { eventBus } from '../services/EventBus';
 
 let db = null;
 
@@ -193,7 +194,10 @@ export class Notification {
       console.log('📝 Notification.crearNotificacion:', { userId, titulo, tipo, fecha });
 
       if (Platform.OS === 'web') {
-        return this._crearNotificacionWeb(userId, titulo, descripcion, tipo, fecha);
+        const id = this._crearNotificacionWeb(userId, titulo, descripcion, tipo, fecha);
+        // Emitir evento para actualizar el badge
+        eventBus.emit('notificationsUpdated', { userId, type: 'created' });
+        return id;
       }
 
       const database = getDB();
@@ -204,6 +208,10 @@ export class Notification {
       );
 
       console.log('✅ Notificación insertada con ID:', resultado.lastInsertRowId);
+
+      // Emitir evento para actualizar el badge
+      eventBus.emit('notificationsUpdated', { userId, type: 'created' });
+
       return resultado.lastInsertRowId;
     } catch (error) {
       console.error('❌ Error al crear notificación:', error);
@@ -299,14 +307,17 @@ export class Notification {
   static async marcarComoLeida(id) {
     try {
       if (Platform.OS === 'web') {
-        return this._marcarComoLeidaWeb(id);
+        this._marcarComoLeidaWeb(id);
+      } else {
+        const database = getDB();
+        await database.runAsync(
+          `UPDATE notifications SET leida = 1 WHERE id = ?`,
+          [id]
+        );
       }
 
-      const database = getDB();
-      await database.runAsync(
-        `UPDATE notifications SET leida = 1 WHERE id = ?`,
-        [id]
-      );
+      // Emitir evento
+      eventBus.emit('notificationsUpdated', { type: 'updated' });
       return true;
     } catch (error) {
       console.error('Error al marcar como leída:', error);
@@ -332,14 +343,17 @@ export class Notification {
   static async marcarTodasComoLeidas(userId) {
     try {
       if (Platform.OS === 'web') {
-        return this._marcarTodasComoLeidasWeb(userId);
+        this._marcarTodasComoLeidasWeb(userId);
+      } else {
+        const database = getDB();
+        await database.runAsync(
+          `UPDATE notifications SET leida = 1 WHERE userId = ? AND leida = 0`,
+          [userId]
+        );
       }
 
-      const database = getDB();
-      await database.runAsync(
-        `UPDATE notifications SET leida = 1 WHERE userId = ? AND leida = 0`,
-        [userId]
-      );
+      // Emitir evento
+      eventBus.emit('notificationsUpdated', { userId, type: 'allRead' });
       return true;
     } catch (error) {
       console.error('Error al marcar todas como leídas:', error);
@@ -366,14 +380,17 @@ export class Notification {
   static async eliminarNotificacion(id) {
     try {
       if (Platform.OS === 'web') {
-        return this._eliminarNotificacionWeb(id);
+        this._eliminarNotificacionWeb(id);
+      } else {
+        const database = getDB();
+        await database.runAsync(
+          `DELETE FROM notifications WHERE id = ?`,
+          [id]
+        );
       }
 
-      const database = getDB();
-      await database.runAsync(
-        `DELETE FROM notifications WHERE id = ?`,
-        [id]
-      );
+      // Emitir evento
+      eventBus.emit('notificationsUpdated', { type: 'deleted' });
       return true;
     } catch (error) {
       console.error('Error al eliminar notificación:', error);

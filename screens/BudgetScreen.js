@@ -13,9 +13,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "../hooks/useAuth";
 import { Budget } from "../models/Budget";
 import { BudgetController } from "../controllers/BudgetController";
+import { TransactionController } from "../controllers/TransactionController";
 import { Notification } from "../models/Notification";
 
 let WebIcons;
@@ -37,8 +39,19 @@ export default function BudgetScreen() {
   const [presupuestoAEliminar, setPresupuestoAEliminar] = useState(null);
 
   useEffect(() => {
-    cargarPresupuestos();
+    if (usuario?.id) {
+      cargarPresupuestos();
+    }
   }, [usuario]);
+
+  // Recargar presupuestos cada vez que la pantalla recibe el foco
+  useFocusEffect(
+    React.useCallback(() => {
+      if (usuario?.id) {
+        cargarPresupuestos();
+      }
+    }, [usuario])
+  );
 
   const cargarPresupuestos = async () => {
     try {
@@ -53,21 +66,65 @@ export default function BudgetScreen() {
       const mes = ahora.getMonth() + 1;
       const año = ahora.getFullYear();
 
+      console.log(`📦 Cargando presupuestos para usuario ${usuario.id}, mes ${mes}/${año}`);
+
+      // Primero cargar los presupuestos
       const presupuestos = await Budget.obtenerPresupuestosUsuario(
         usuario.id,
         mes,
         año
       );
 
-      // Transformar datos para la pantalla
-      const datosTransformados = presupuestos.map((p) => ({
-        id: p.id?.toString() || Date.now().toString(),
-        categoria: p.categoria,
-        usado: p.montoActual || 0,
-        limite: p.montoLimite,
-      }));
+      console.log(`📦 Presupuestos cargados:`, presupuestos.map(p => ({ id: p.id, categoria: p.categoria, montoActual: p.montoActual, montoLimite: p.montoLimite })));
 
-      setData(datosTransformados);
+      // Luego intentar recalcular presupuestos (si está disponible)
+      try {
+        if (TransactionController.recalcularPresupuestos) {
+          console.log('🔄 Iniciando recálculo de presupuestos...');
+          await TransactionController.recalcularPresupuestos(usuario.id, mes, año);
+          console.log('✅ Presupuestos recalculados exitosamente');
+
+          // Recargar los presupuestos después del recálculo
+          const presupuestosActualizados = await Budget.obtenerPresupuestosUsuario(
+            usuario.id,
+            mes,
+            año
+          );
+          console.log(`📦 Presupuestos después del recálculo:`, presupuestosActualizados.map(p => ({ id: p.id, categoria: p.categoria, montoActual: p.montoActual, montoLimite: p.montoLimite })));
+
+          // Transformar datos para la pantalla
+          const datosTransformados = presupuestosActualizados.map((p) => ({
+            id: p.id?.toString() || Date.now().toString(),
+            categoria: p.categoria,
+            usado: p.montoActual || 0,
+            limite: p.montoLimite,
+          }));
+
+          setData(datosTransformados);
+        } else {
+          // Transformar datos para la pantalla
+          const datosTransformados = presupuestos.map((p) => ({
+            id: p.id?.toString() || Date.now().toString(),
+            categoria: p.categoria,
+            usado: p.montoActual || 0,
+            limite: p.montoLimite,
+          }));
+
+          setData(datosTransformados);
+        }
+      } catch (recalcErr) {
+        console.warn("No se pudo recalcular presupuestos:", recalcErr);
+
+        // Transformar datos para la pantalla sin recalcular
+        const datosTransformados = presupuestos.map((p) => ({
+          id: p.id?.toString() || Date.now().toString(),
+          categoria: p.categoria,
+          usado: p.montoActual || 0,
+          limite: p.montoLimite,
+        }));
+
+        setData(datosTransformados);
+      }
     } catch (err) {
       console.error("Error al cargar presupuestos:", err);
       setError("Error al cargar presupuestos");

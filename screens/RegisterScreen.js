@@ -78,7 +78,7 @@ export default function RegisterScreen() {
 
     if (resultado.success) {
       setCargando(false);
-      Alert.alert("✅ Registro Exitoso", ¡Bienvenido ${nombre}!);
+      Alert.alert("✅ Registro Exitoso", `¡Bienvenido ${nombre}!`);
       setMensaje("Iniciando sesión...");
 
       // Activar la sesión con useAuth

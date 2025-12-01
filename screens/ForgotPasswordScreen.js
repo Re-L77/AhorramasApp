@@ -72,7 +72,7 @@ export default function ForgotPasswordScreen() {
       setLoading(false);
       Alert.alert(
         "Código enviado",
-        Se envió un código de verificación a ${email}\n\nCódigo de prueba: ${codigo}
+        `Se envió un código de verificación a ${email}\n\nCódigo de prueba: ${codigo}`,
       );
       setStep(2);
     }, 1500);

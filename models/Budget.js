@@ -20,12 +20,39 @@ const getDB = () => {
 
 // Datos iniciales de prueba
 const INITIAL_BUDGETS = [
-  { id: 1, userId: 1, categoria: 'Alimentación', montoLimite: 500, montoActual: 150, mes: 11, año: 2025 },
-  { id: 2, userId: 1, categoria: 'Transporte', montoLimite: 300, montoActual: 50, mes: 11, año: 2025 },
-  { id: 3, userId: 1, categoria: 'Entretenimiento', montoLimite: 200, montoActual: 0, mes: 11, año: 2025 },
-  { id: 4, userId: 2, categoria: 'Alimentación', montoLimite: 400, montoActual: 100, mes: 11, año: 2025 },
-  { id: 5, userId: 2, categoria: 'Entretenimiento', montoLimite: 250, montoActual: 100, mes: 11, año: 2025 },
-  { id: 6, userId: 3, categoria: 'Transporte', montoLimite: 400, montoActual: 80, mes: 11, año: 2025 }
+  // Usuario 1 - Presupuestos de noviembre 2025
+  { id: 1, userId: 1, categoria: 'Alimentación', montoLimite: 800, montoActual: 0, mes: 11, año: 2025 },
+  { id: 2, userId: 1, categoria: 'Transporte', montoLimite: 400, montoActual: 0, mes: 11, año: 2025 },
+  { id: 3, userId: 1, categoria: 'Entretenimiento', montoLimite: 300, montoActual: 0, mes: 11, año: 2025 },
+  { id: 4, userId: 1, categoria: 'Servicios', montoLimite: 600, montoActual: 0, mes: 11, año: 2025 },
+  { id: 5, userId: 1, categoria: 'Educación', montoLimite: 500, montoActual: 0, mes: 11, año: 2025 },
+  { id: 6, userId: 1, categoria: 'Ahorro', montoLimite: 1000, montoActual: 0, mes: 11, año: 2025 },
+
+  // Usuario 2 - Presupuestos de noviembre 2025
+  { id: 7, userId: 2, categoria: 'Alimentación', montoLimite: 700, montoActual: 0, mes: 11, año: 2025 },
+  { id: 8, userId: 2, categoria: 'Transporte', montoLimite: 350, montoActual: 0, mes: 11, año: 2025 },
+  { id: 9, userId: 2, categoria: 'Entretenimiento', montoLimite: 250, montoActual: 0, mes: 11, año: 2025 },
+
+  // Usuario 3 - Presupuestos de noviembre 2025
+  { id: 10, userId: 3, categoria: 'Alimentación', montoLimite: 600, montoActual: 0, mes: 11, año: 2025 },
+  { id: 11, userId: 3, categoria: 'Transporte', montoLimite: 400, montoActual: 0, mes: 11, año: 2025 },
+
+  // Usuario 1 - Presupuestos de diciembre 2025
+  { id: 12, userId: 1, categoria: 'Alimentación', montoLimite: 800, montoActual: 0, mes: 12, año: 2025 },
+  { id: 13, userId: 1, categoria: 'Transporte', montoLimite: 400, montoActual: 0, mes: 12, año: 2025 },
+  { id: 14, userId: 1, categoria: 'Entretenimiento', montoLimite: 300, montoActual: 0, mes: 12, año: 2025 },
+  { id: 15, userId: 1, categoria: 'Servicios', montoLimite: 600, montoActual: 0, mes: 12, año: 2025 },
+  { id: 16, userId: 1, categoria: 'Educación', montoLimite: 500, montoActual: 0, mes: 12, año: 2025 },
+  { id: 17, userId: 1, categoria: 'Ahorro', montoLimite: 1000, montoActual: 0, mes: 12, año: 2025 },
+
+  // Usuario 2 - Presupuestos de diciembre 2025
+  { id: 18, userId: 2, categoria: 'Alimentación', montoLimite: 700, montoActual: 0, mes: 12, año: 2025 },
+  { id: 19, userId: 2, categoria: 'Transporte', montoLimite: 350, montoActual: 0, mes: 12, año: 2025 },
+  { id: 20, userId: 2, categoria: 'Entretenimiento', montoLimite: 250, montoActual: 0, mes: 12, año: 2025 },
+
+  // Usuario 3 - Presupuestos de diciembre 2025
+  { id: 21, userId: 3, categoria: 'Alimentación', montoLimite: 600, montoActual: 0, mes: 12, año: 2025 },
+  { id: 22, userId: 3, categoria: 'Transporte', montoLimite: 400, montoActual: 0, mes: 12, año: 2025 }
 ];
 
 export class Budget {
@@ -118,6 +145,31 @@ export class Budget {
           );
         }
         console.log('✅ Datos iniciales cargados en SQLite (presupuestos)');
+      } else {
+        // Limpiar presupuestos de noviembre para recargar con los de diciembre
+        try {
+          const conteo = await database.getAllAsync('SELECT COUNT(*) as count FROM budgets WHERE mes = 11');
+          if (conteo[0].count > 0) {
+            await database.execAsync('DELETE FROM budgets WHERE mes = 11;');
+            console.log('✅ Presupuestos de noviembre eliminados');
+
+            // Cargar presupuestos de diciembre
+            for (const presupuesto of INITIAL_BUDGETS) {
+              try {
+                await database.runAsync(
+                  `INSERT OR IGNORE INTO budgets (id, userId, categoria, montoLimite, montoActual, mes, año)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                  [presupuesto.id, presupuesto.userId, presupuesto.categoria, presupuesto.montoLimite, presupuesto.montoActual, presupuesto.mes, presupuesto.año]
+                );
+              } catch (e) {
+                // Ignorar duplicados
+              }
+            }
+            console.log('✅ Presupuestos de diciembre cargados');
+          }
+        } catch (cleanErr) {
+          console.warn('No se pudo limpiar presupuestos antiguos:', cleanErr);
+        }
       }
 
       console.log('Tabla budgets creada o ya existe');
@@ -325,8 +377,9 @@ export class Budget {
       }
 
       const database = getDB();
+      // Buscar case-insensitive usando LOWER()
       const resultado = await database.getFirstAsync(
-        `SELECT * FROM budgets WHERE userId = ? AND categoria = ? AND mes = ? AND año = ?`,
+        `SELECT * FROM budgets WHERE userId = ? AND LOWER(categoria) = LOWER(?) AND mes = ? AND año = ?`,
         [userId, categoria, mes, año]
       );
       return resultado;
@@ -339,7 +392,12 @@ export class Budget {
   static _obtenerPresupuestoPorCategoriaWeb(userId, categoria, mes, año) {
     try {
       const presupuestos = JSON.parse(localStorage.getItem('presupuestos') || '[]');
-      return presupuestos.find(p => p.userId === userId && p.categoria === categoria && p.mes === mes && p.año === año) || null;
+      return presupuestos.find(p =>
+        p.userId === userId &&
+        p.categoria.toLowerCase() === categoria.toLowerCase() &&
+        p.mes === mes &&
+        p.año === año
+      ) || null;
     } catch (error) {
       console.error('Error al obtener presupuesto por categoría en web:', error);
       return null;

@@ -20,45 +20,62 @@ const getDB = () => {
 
 // Datos iniciales de prueba
 const INITIAL_TRANSACTIONS = [
-  // Usuario 1 - Ingresos
-  { id: 1, userId: 1, tipo: 'ingreso', monto: 3000, descripcion: 'Salario mensual', categoria: 'Ingresos', fecha: '2025-11-01' },
-  { id: 2, userId: 1, tipo: 'ingreso', monto: 500, descripcion: 'Bonificación', categoria: 'Ingresos', fecha: '2025-11-05' },
-  { id: 3, userId: 1, tipo: 'ingreso', monto: 200, descripcion: 'Freelance trabajo', categoria: 'Ingresos', fecha: '2025-11-10' },
+  // Usuario 1 - Ingresos Noviembre
+  { id: 1, userId: 1, tipo: 'ingreso', monto: 4000, descripcion: 'Salario mensual', categoria: 'Ingresos', fecha: '2025-11-01', icono: null },
+  { id: 2, userId: 1, tipo: 'ingreso', monto: 600, descripcion: 'Bonificación extra', categoria: 'Ingresos', fecha: '2025-11-15', icono: null },
 
-  // Usuario 1 - Egresos Alimentación
-  { id: 4, userId: 1, tipo: 'egreso', monto: 150, descripcion: 'Supermercado', categoria: 'Alimentación', fecha: '2025-11-02' },
-  { id: 5, userId: 1, tipo: 'egreso', monto: 80, descripcion: 'Restaurante', categoria: 'Alimentación', fecha: '2025-11-06' },
-  { id: 6, userId: 1, tipo: 'egreso', monto: 120, descripcion: 'Compras verdulería', categoria: 'Alimentación', fecha: '2025-11-12' },
+  // Usuario 1 - Egresos Alimentación (límite: $800)
+  { id: 3, userId: 1, tipo: 'egreso', monto: 250, descripcion: 'Supermercado', categoria: 'Alimentación', fecha: '2025-11-02', icono: '🍔' },
+  { id: 4, userId: 1, tipo: 'egreso', monto: 120, descripcion: 'Restaurante almuerzo', categoria: 'Alimentación', fecha: '2025-11-05', icono: '🍔' },
+  { id: 5, userId: 1, tipo: 'egreso', monto: 180, descripcion: 'Compra alimentos frescos', categoria: 'Alimentación', fecha: '2025-11-10', icono: '🍔' },
+  { id: 6, userId: 1, tipo: 'egreso', monto: 90, descripcion: 'Cafe y snacks', categoria: 'Alimentación', fecha: '2025-11-18', icono: '🍔' },
 
-  // Usuario 1 - Egresos Transporte
-  { id: 7, userId: 1, tipo: 'egreso', monto: 50, descripcion: 'Gasolina', categoria: 'Transporte', fecha: '2025-11-03' },
-  { id: 8, userId: 1, tipo: 'egreso', monto: 30, descripcion: 'Uber', categoria: 'Transporte', fecha: '2025-11-08' },
-  { id: 9, userId: 1, tipo: 'egreso', monto: 45, descripcion: 'Mantenimiento auto', categoria: 'Transporte', fecha: '2025-11-15' },
+  // Usuario 1 - Egresos Transporte (límite: $400)
+  { id: 7, userId: 1, tipo: 'egreso', monto: 120, descripcion: 'Gasolina', categoria: 'Transporte', fecha: '2025-11-03', icono: '🚕' },
+  { id: 8, userId: 1, tipo: 'egreso', monto: 50, descripcion: 'Uber al trabajo', categoria: 'Transporte', fecha: '2025-11-06', icono: '🚕' },
+  { id: 9, userId: 1, tipo: 'egreso', monto: 80, descripcion: 'Mantenimiento auto', categoria: 'Transporte', fecha: '2025-11-12', icono: '🚕' },
 
-  // Usuario 1 - Egresos Servicios
-  { id: 10, userId: 1, tipo: 'egreso', monto: 200, descripcion: 'Internet y teléfono', categoria: 'Servicios', fecha: '2025-11-01' },
-  { id: 11, userId: 1, tipo: 'egreso', monto: 150, descripcion: 'Electricidad', categoria: 'Servicios', fecha: '2025-11-04' },
-  { id: 12, userId: 1, tipo: 'egreso', monto: 100, descripcion: 'Agua y Gas', categoria: 'Servicios', fecha: '2025-11-07' },
+  // Usuario 1 - Egresos Servicios (límite: $600)
+  { id: 10, userId: 1, tipo: 'egreso', monto: 250, descripcion: 'Internet y telefonía', categoria: 'Servicios', fecha: '2025-11-01', icono: '💡' },
+  { id: 11, userId: 1, tipo: 'egreso', monto: 180, descripcion: 'Electricidad', categoria: 'Servicios', fecha: '2025-11-04', icono: '💡' },
+  { id: 12, userId: 1, tipo: 'egreso', monto: 90, descripcion: 'Agua y gas', categoria: 'Servicios', fecha: '2025-11-08', icono: '💡' },
 
-  // Usuario 1 - Egresos Entretenimiento
-  { id: 13, userId: 1, tipo: 'egreso', monto: 70, descripcion: 'Cine', categoria: 'Entretenimiento', fecha: '2025-11-09' },
-  { id: 14, userId: 1, tipo: 'egreso', monto: 50, descripcion: 'Suscripción streaming', categoria: 'Entretenimiento', fecha: '2025-11-11' },
+  // Usuario 1 - Egresos Entretenimiento (límite: $300)
+  { id: 13, userId: 1, tipo: 'egreso', monto: 120, descripcion: 'Cine con amigos', categoria: 'Entretenimiento', fecha: '2025-11-07', icono: '🎬' },
+  { id: 14, userId: 1, tipo: 'egreso', monto: 50, descripcion: 'Suscripción streaming', categoria: 'Entretenimiento', fecha: '2025-11-11', icono: '🎬' },
 
-  // Usuario 1 - Egresos Educación
-  { id: 15, userId: 1, tipo: 'egreso', monto: 300, descripcion: 'Curso online', categoria: 'Educación', fecha: '2025-11-13' },
+  // Usuario 1 - Educación (límite: $500)
+  { id: 15, userId: 1, tipo: 'egreso', monto: 400, descripcion: 'Curso online de programación', categoria: 'Educación', fecha: '2025-11-09', icono: '📚' },
 
-  // Usuario 1 - Ahorro
-  { id: 16, userId: 1, tipo: 'egreso', monto: 500, descripcion: 'Ahorro mensual', categoria: 'Ahorro', fecha: '2025-11-14' },
+  // Usuario 1 - Ahorro (límite: $1000)
+  { id: 16, userId: 1, tipo: 'egreso', monto: 500, descripcion: 'Ahorro para vacaciones', categoria: 'Ahorro', fecha: '2025-11-20', icono: '🏦' },
 
-  // Otros usuarios
-  { id: 17, userId: 2, tipo: 'ingreso', monto: 1800, descripcion: 'Salario', categoria: 'Ingresos', fecha: '2025-11-01' },
-  { id: 18, userId: 2, tipo: 'egreso', monto: 100, descripcion: 'Cine', categoria: 'Entretenimiento', fecha: '2025-11-02' },
-  { id: 19, userId: 3, tipo: 'ingreso', monto: 2500, descripcion: 'Freelance', categoria: 'Ingresos', fecha: '2025-11-01' },
-  { id: 20, userId: 3, tipo: 'egreso', monto: 80, descripcion: 'Gasolina', categoria: 'Transporte', fecha: '2025-11-03' }
+  // Usuario 2 - Ingresos
+  { id: 17, userId: 2, tipo: 'ingreso', monto: 3500, descripcion: 'Salario mensual', categoria: 'Ingresos', fecha: '2025-11-01', icono: null },
+
+  // Usuario 2 - Egresos Alimentación
+  { id: 18, userId: 2, tipo: 'egreso', monto: 280, descripcion: 'Supermercado semanal', categoria: 'Alimentación', fecha: '2025-11-02', icono: '🍔' },
+  { id: 19, userId: 2, tipo: 'egreso', monto: 200, descripcion: 'Restaurante familiar', categoria: 'Alimentación', fecha: '2025-11-14', icono: '🍔' },
+
+  // Usuario 2 - Egresos Transporte
+  { id: 20, userId: 2, tipo: 'egreso', monto: 150, descripcion: 'Transporte público y Uber', categoria: 'Transporte', fecha: '2025-11-04', icono: '🚕' },
+
+  // Usuario 2 - Egresos Entretenimiento
+  { id: 21, userId: 2, tipo: 'egreso', monto: 80, descripcion: 'Cine', categoria: 'Entretenimiento', fecha: '2025-11-10', icono: '🎬' },
+
+  // Usuario 3 - Ingresos
+  { id: 22, userId: 3, tipo: 'ingreso', monto: 2800, descripcion: 'Salario mensual', categoria: 'Ingresos', fecha: '2025-11-01', icono: null },
+
+  // Usuario 3 - Egresos Alimentación
+  { id: 23, userId: 3, tipo: 'egreso', monto: 220, descripcion: 'Compras alimentos', categoria: 'Alimentación', fecha: '2025-11-03', icono: '🍔' },
+  { id: 24, userId: 3, tipo: 'egreso', monto: 150, descripcion: 'Restaurante', categoria: 'Alimentación', fecha: '2025-11-12', icono: '🍔' },
+
+  // Usuario 3 - Egresos Transporte
+  { id: 25, userId: 3, tipo: 'egreso', monto: 200, descripcion: 'Gasolina y mantenimiento', categoria: 'Transporte', fecha: '2025-11-05', icono: '🚕' }
 ];
 
 export class Transaction {
-  constructor(id, userId, tipo, monto, descripcion, categoria, fecha) {
+  constructor(id, userId, tipo, monto, descripcion, categoria, fecha, icono = null) {
     this.id = id;
     this.userId = userId;
     this.tipo = tipo; // 'ingreso' o 'egreso'
@@ -66,6 +83,7 @@ export class Transaction {
     this.descripcion = descripcion;
     this.categoria = categoria;
     this.fecha = fecha;
+    this.icono = icono; // Icono personalizado (opcional)
   }
 
   // Getter methods
@@ -97,6 +115,10 @@ export class Transaction {
     return this.fecha;
   }
 
+  getIcono() {
+    return this.icono;
+  }
+
   // Métodos estáticos para operaciones de base de datos
   static async initializeTable() {
     try {
@@ -118,9 +140,24 @@ export class Transaction {
           descripcion TEXT,
           categoria TEXT NOT NULL,
           fecha TEXT NOT NULL,
+          icono TEXT,
           FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
         );
       `);
+
+      // Verificar si la columna 'icono' existe y agregarla si no
+      try {
+        const tableInfo = await database.getAllAsync("PRAGMA table_info(transactions)");
+        const tieneIcono = tableInfo.some(col => col.name === 'icono');
+
+        if (!tieneIcono) {
+          console.log('Agregando columna icono a transactions...');
+          await database.execAsync('ALTER TABLE transactions ADD COLUMN icono TEXT;');
+          console.log('✅ Columna icono agregada exitosamente');
+        }
+      } catch (alterError) {
+        console.error('Error al agregar columna icono:', alterError);
+      }
 
       // Verificar si la tabla está vacía y cargar datos iniciales
       const transacciones = await database.getAllAsync('SELECT COUNT(*) as count FROM transactions');
@@ -141,17 +178,17 @@ export class Transaction {
     }
   }
 
-  static async crearTransaccion(userId, tipo, monto, descripcion, categoria, fecha) {
+  static async crearTransaccion(userId, tipo, monto, descripcion, categoria, fecha, icono = null) {
     try {
       if (Platform.OS === 'web') {
-        return this._crearTransaccionWeb(userId, tipo, monto, descripcion, categoria, fecha);
+        return this._crearTransaccionWeb(userId, tipo, monto, descripcion, categoria, fecha, icono);
       }
 
       const database = getDB();
       const resultado = await database.runAsync(
-        `INSERT INTO transactions (userId, tipo, monto, descripcion, categoria, fecha)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [userId, tipo, monto, descripcion, categoria, fecha]
+        `INSERT INTO transactions (userId, tipo, monto, descripcion, categoria, fecha, icono)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [userId, tipo, monto, descripcion, categoria, fecha, icono]
       );
       return resultado.lastInsertRowId;
     } catch (error) {
@@ -160,7 +197,7 @@ export class Transaction {
     }
   }
 
-  static _crearTransaccionWeb(userId, tipo, monto, descripcion, categoria, fecha) {
+  static _crearTransaccionWeb(userId, tipo, monto, descripcion, categoria, fecha, icono = null) {
     try {
       const transacciones = JSON.parse(localStorage.getItem('transacciones') || '[]');
       const id = transacciones.length > 0 ? Math.max(...transacciones.map(t => t.id)) + 1 : 1;
@@ -171,7 +208,8 @@ export class Transaction {
         monto,
         descripcion,
         categoria,
-        fecha
+        fecha,
+        icono
       });
       localStorage.setItem('transacciones', JSON.stringify(transacciones));
       return id;
@@ -237,16 +275,16 @@ export class Transaction {
     }
   }
 
-  static async actualizarTransaccion(id, tipo, monto, descripcion, categoria) {
+  static async actualizarTransaccion(id, tipo, monto, descripcion, categoria, icono = null) {
     try {
       if (Platform.OS === 'web') {
-        return this._actualizarTransaccionWeb(id, tipo, monto, descripcion, categoria);
+        return this._actualizarTransaccionWeb(id, tipo, monto, descripcion, categoria, icono);
       }
 
       const database = getDB();
       await database.runAsync(
-        `UPDATE transactions SET tipo = ?, monto = ?, descripcion = ?, categoria = ? WHERE id = ?`,
-        [tipo, monto, descripcion, categoria, id]
+        `UPDATE transactions SET tipo = ?, monto = ?, descripcion = ?, categoria = ?, icono = ? WHERE id = ?`,
+        [tipo, monto, descripcion, categoria, icono, id]
       );
       return true;
     } catch (error) {
@@ -255,7 +293,7 @@ export class Transaction {
     }
   }
 
-  static _actualizarTransaccionWeb(id, tipo, monto, descripcion, categoria) {
+  static _actualizarTransaccionWeb(id, tipo, monto, descripcion, categoria, icono = null) {
     try {
       const transacciones = JSON.parse(localStorage.getItem('transacciones') || '[]');
       const index = transacciones.findIndex(t => t.id === id);
@@ -264,6 +302,7 @@ export class Transaction {
         transacciones[index].monto = monto;
         transacciones[index].descripcion = descripcion;
         transacciones[index].categoria = categoria;
+        transacciones[index].icono = icono;
         localStorage.setItem('transacciones', JSON.stringify(transacciones));
       }
       return true;

@@ -1,9 +1,9 @@
 // App.js
 import React, { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { AuthProvider } from "./context/AuthContext";
-import RootNavigator from "./navigation/RootNavigator";
-import { DatabaseService } from "./database/DatabaseService";
+import { AuthProvider } from "./app/config/AuthContext";
+import RootNavigator from "./app/navigation/RootNavigator";
+import { DatabaseService } from "./app/config/DatabaseService";
 
 export default function App() {
   useEffect(() => {

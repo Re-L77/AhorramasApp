@@ -26,9 +26,18 @@ export class UserController {
 
       // Crear usuario
       const userId = await User.crearUsuario(nombre, correo, telefono, contraseña);
+
+      // Obtener el usuario creado para retornarlo
+      const usuarioCreado = await User.obtenerUsuarioPorId(userId);
+
       return {
         success: true,
-        userId,
+        usuario: {
+          id: usuarioCreado.id,
+          nombre: usuarioCreado.nombre,
+          correo: usuarioCreado.correo,
+          telefono: usuarioCreado.telefono
+        },
         message: 'Usuario registrado correctamente'
       };
     } catch (error) {

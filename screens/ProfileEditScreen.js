@@ -16,6 +16,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "../hooks/useAuth";
 import { UserController } from "../controllers/UserController";
+import { Notification } from "../models/Notification";
 
 export default function ProfileEditScreen({ route }) {
     const navigation = useNavigation();
@@ -76,6 +77,15 @@ export default function ProfileEditScreen({ route }) {
         setLoading(false);
 
         if (resultado.success) {
+            // Crear notificación
+            await Notification.crearNotificacion(
+                usuario.id,
+                '✏️ Perfil actualizado',
+                `Tu perfil ha sido actualizado correctamente`,
+                'info',
+                new Date().toISOString()
+            );
+
             Alert.alert("Éxito", "Perfil actualizado correctamente.", [
                 {
                     text: "OK",
@@ -120,6 +130,15 @@ export default function ProfileEditScreen({ route }) {
         setLoading(false);
 
         if (resultado.success) {
+            // Crear notificación
+            await Notification.crearNotificacion(
+                usuario.id,
+                '🔐 Contraseña actualizada',
+                `Tu contraseña ha sido cambiada correctamente`,
+                'info',
+                new Date().toISOString()
+            );
+
             setPwOk("Contraseña actualizada correctamente.");
             setCurrPass("");
             setNewPass("");

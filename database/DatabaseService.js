@@ -7,15 +7,11 @@
 
 import { Platform } from 'react-native';
 
-// Solo importar en plataformas que lo soporten
-let User, Transaction, Budget, Notification;
-
-if (Platform.OS !== 'web') {
-  User = require('../models/User').User;
-  Transaction = require('../models/Transaction').Transaction;
-  Budget = require('../models/Budget').Budget;
-  Notification = require('../models/Notification').Notification;
-}
+// Importar siempre los modelos (ya tienen validación interna para web)
+import { User } from '../models/User';
+import { Transaction } from '../models/Transaction';
+import { Budget } from '../models/Budget';
+import { Notification } from '../models/Notification';
 
 export class DatabaseService {
   static isWebPlatform = Platform.OS === 'web';
@@ -28,18 +24,16 @@ export class DatabaseService {
     try {
       console.log('Inicializando base de datos...');
 
-      // En web, usar localStorage como alternativa temporal
-      if (this.isWebPlatform) {
-        console.log('⚠️ Usando almacenamiento local (localStorage) en web');
-        console.log('ℹ️ Para usar SQLite, ejecutar en iOS/Android');
-        return { success: true, mode: 'localStorage' };
-      }
-
-      // Crear tablas en orden de dependencia
+      // Crear tablas en orden de dependencia (funciona en web y nativo)
       await User.initializeTable();
       await Transaction.initializeTable();
       await Budget.initializeTable();
       await Notification.initializeTable();
+
+      if (this.isWebPlatform) {
+        console.log('✅ Base de datos (localStorage) inicializada correctamente');
+        return { success: true, mode: 'localStorage' };
+      }
 
       console.log('✅ Base de datos SQLite inicializada correctamente');
       return { success: true, mode: 'sqlite' };

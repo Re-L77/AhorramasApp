@@ -1,6 +1,7 @@
 // App.js
 import React, { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { AuthProvider } from "./context/AuthContext";
 import RootNavigator from "./navigation/RootNavigator";
 import { DatabaseService } from "./database/DatabaseService";
 
@@ -26,7 +27,9 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <RootNavigator />
+      <AuthProvider>
+        <RootNavigator />
+      </AuthProvider>
     </SafeAreaProvider>
   );
 }

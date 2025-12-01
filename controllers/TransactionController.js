@@ -47,7 +47,7 @@ export class TransactionController {
       );
 
       // Crear notificación automática
-      const tipoNotif = tipo === 'ingreso' ? 'ingreso' : 'gasto';
+      const tipoNotif = tipo === 'ingreso' ? 'logro' : 'info';
       const titulo = tipo === 'ingreso' ? '✅ Ingreso registrado' : '📊 Gasto registrado';
       const contenido = tipo === 'ingreso'
         ? `Se registró un ingreso de $${monto} (${descripcion})`
@@ -55,9 +55,9 @@ export class TransactionController {
 
       await Notification.crearNotificacion(
         userId,
-        tipoNotif,
         titulo,
         contenido,
+        tipoNotif,
         fecha
       );
 
@@ -109,13 +109,13 @@ export class TransactionController {
       localStorage.setItem('transacciones', JSON.stringify(transacciones));
 
       // Crear notificación automática en web
-      const tipoNotif = tipo === 'ingreso' ? 'ingreso' : 'gasto';
+      const tipoNotif = tipo === 'ingreso' ? 'logro' : 'info';
       const titulo = tipo === 'ingreso' ? '✅ Ingreso registrado' : '📊 Gasto registrado';
       const contenido = tipo === 'ingreso'
         ? `Se registró un ingreso de $${monto} (${descripcion})`
         : `Se registró un gasto de $${monto} (${categoria})`;
 
-      this._crearNotificacionWeb(userId, tipoNotif, titulo, contenido);
+      this._crearNotificacionWeb(userId, titulo, contenido, tipoNotif);
 
       // Actualizar presupuesto si es egreso
       if (tipo === 'egreso') {
@@ -138,7 +138,7 @@ export class TransactionController {
   /**
    * Crear notificación en web
    */
-  static _crearNotificacionWeb(userId, tipo, titulo, contenido) {
+  static _crearNotificacionWeb(userId, titulo, contenido, tipo = 'info') {
     try {
       const notificacionesJSON = localStorage.getItem('notificaciones');
       const notificaciones = notificacionesJSON ? JSON.parse(notificacionesJSON) : [];
@@ -148,10 +148,10 @@ export class TransactionController {
       const nuevaNotificacion = {
         id: nuevoId,
         userId,
-        tipo,
         titulo,
-        contenido,
-        fechaCreacion: new Date().toISOString(),
+        descripcion: contenido,
+        tipo,
+        fecha: new Date().toISOString(),
         leida: 0
       };
 

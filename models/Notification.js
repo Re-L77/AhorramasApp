@@ -21,29 +21,29 @@ const getDB = () => {
 // Datos iniciales de prueba
 const INITIAL_NOTIFICATIONS = [
   // Usuario 1 - Notificaciones de ingresos
-  { id: 1, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $3000 (Salario mensual)', tipo: 'ingreso', fecha: '2025-11-01', leida: 1 },
-  { id: 2, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $500 (Bonificación)', tipo: 'ingreso', fecha: '2025-11-05', leida: 1 },
-  { id: 3, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $200 (Freelance trabajo)', tipo: 'ingreso', fecha: '2025-11-10', leida: 1 },
-  { id: 22, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $150 (Reembolso)', tipo: 'ingreso', fecha: '2025-11-18', leida: 0 },
+  { id: 1, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $3000 (Salario mensual)', tipo: 'logro', fecha: '2025-11-01', leida: 1 },
+  { id: 2, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $500 (Bonificación)', tipo: 'logro', fecha: '2025-11-05', leida: 1 },
+  { id: 3, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $200 (Freelance trabajo)', tipo: 'logro', fecha: '2025-11-10', leida: 1 },
+  { id: 22, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $150 (Reembolso)', tipo: 'logro', fecha: '2025-11-18', leida: 0 },
 
   // Usuario 1 - Notificaciones de gastos
-  { id: 4, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $150 (Supermercado)', tipo: 'gasto', fecha: '2025-11-02', leida: 1 },
-  { id: 5, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $200 (Servicios)', tipo: 'gasto', fecha: '2025-11-01', leida: 1 },
-  { id: 6, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $50 (Gasolina)', tipo: 'gasto', fecha: '2025-11-03', leida: 1 },
-  { id: 23, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $80 (Restaurante)', tipo: 'gasto', fecha: '2025-11-17', leida: 0 },
-  { id: 24, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $120 (Medicinas)', tipo: 'gasto', fecha: '2025-11-19', leida: 0 },
-  { id: 25, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $45 (Transporte)', tipo: 'gasto', fecha: '2025-11-20', leida: 1 },
+  { id: 4, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $150 (Supermercado)', tipo: 'info', fecha: '2025-11-02', leida: 1 },
+  { id: 5, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $200 (Servicios)', tipo: 'info', fecha: '2025-11-01', leida: 1 },
+  { id: 6, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $50 (Gasolina)', tipo: 'info', fecha: '2025-11-03', leida: 1 },
+  { id: 23, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $80 (Restaurante)', tipo: 'info', fecha: '2025-11-17', leida: 0 },
+  { id: 24, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $120 (Medicinas)', tipo: 'info', fecha: '2025-11-19', leida: 0 },
+  { id: 25, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $45 (Transporte)', tipo: 'info', fecha: '2025-11-20', leida: 1 },
 
   // Usuario 1 - Notificaciones de presupuesto
-  { id: 7, userId: 1, titulo: 'Presupuesto excedido', descripcion: 'Has excedido el presupuesto de Alimentación', tipo: 'presupuesto', fecha: '2025-11-15', leida: 0 },
-  { id: 8, userId: 1, titulo: 'Advertencia de presupuesto', descripcion: 'Tu presupuesto de Servicios está al 80%', tipo: 'presupuesto', fecha: '2025-11-07', leida: 1 },
-  { id: 26, userId: 1, titulo: 'Presupuesto disponible', descripcion: 'Tu presupuesto de Entretenimiento tiene $150 disponibles', tipo: 'presupuesto', fecha: '2025-11-16', leida: 1 },
+  { id: 7, userId: 1, titulo: 'Presupuesto excedido', descripcion: 'Has excedido el presupuesto de Alimentación', tipo: 'alerta', fecha: '2025-11-15', leida: 0 },
+  { id: 8, userId: 1, titulo: 'Advertencia de presupuesto', descripcion: 'Tu presupuesto de Servicios está al 80%', tipo: 'alerta', fecha: '2025-11-07', leida: 1 },
+  { id: 26, userId: 1, titulo: 'Presupuesto disponible', descripcion: 'Tu presupuesto de Entretenimiento tiene $150 disponibles', tipo: 'info', fecha: '2025-11-16', leida: 1 },
 
   // Usuario 1 - Notificaciones de logros
-  { id: 9, userId: 1, titulo: 'Meta de ahorro alcanzada', descripcion: '¡Felicidades! Alcanzaste tu meta de ahorro mensual', tipo: 'ahorro', fecha: '2025-11-14', leida: 1 },
-  { id: 10, userId: 1, titulo: 'Logro desbloqueado', descripcion: 'Completaste 15 transacciones este mes', tipo: 'ahorro', fecha: '2025-11-16', leida: 0 },
-  { id: 27, userId: 1, titulo: 'Racha de ahorro', descripcion: 'Llevas 5 días consecutivos ahorrando dinero', tipo: 'ahorro', fecha: '2025-11-21', leida: 0 },
-  { id: 28, userId: 1, titulo: 'Presupuesto balanceado', descripcion: 'Mantuviste el balance perfecto este mes', tipo: 'ahorro', fecha: '2025-11-11', leida: 1 },
+  { id: 9, userId: 1, titulo: 'Meta de ahorro alcanzada', descripcion: '¡Felicidades! Alcanzaste tu meta de ahorro mensual', tipo: 'logro', fecha: '2025-11-14', leida: 1 },
+  { id: 10, userId: 1, titulo: 'Logro desbloqueado', descripcion: 'Completaste 15 transacciones este mes', tipo: 'logro', fecha: '2025-11-16', leida: 0 },
+  { id: 27, userId: 1, titulo: 'Racha de ahorro', descripcion: 'Llevas 5 días consecutivos ahorrando dinero', tipo: 'logro', fecha: '2025-11-21', leida: 0 },
+  { id: 28, userId: 1, titulo: 'Presupuesto balanceado', descripcion: 'Mantuviste el balance perfecto este mes', tipo: 'logro', fecha: '2025-11-11', leida: 1 },
 
   // Usuario 1 - Notificación de bienvenida y recordatorios
   { id: 11, userId: 1, titulo: 'Bienvenido a Ahorra+', descripcion: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fecha: '2025-11-01', leida: 1 },
@@ -121,7 +121,7 @@ export class Notification {
             userId INTEGER NOT NULL,
             titulo TEXT NOT NULL,
             descripcion TEXT,
-            tipo TEXT NOT NULL CHECK (tipo IN ('alerta', 'recordatorio', 'logro', 'info', 'ingreso', 'gasto', 'presupuesto', 'ahorro')),
+            tipo TEXT NOT NULL CHECK (tipo IN ('alerta', 'recordatorio', 'logro', 'info')),
             fecha TEXT NOT NULL,
             leida INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
@@ -137,7 +137,7 @@ export class Notification {
             userId INTEGER NOT NULL,
             titulo TEXT NOT NULL,
             descripcion TEXT,
-            tipo TEXT NOT NULL CHECK (tipo IN ('alerta', 'recordatorio', 'logro', 'info', 'ingreso', 'gasto', 'presupuesto', 'ahorro')),
+            tipo TEXT NOT NULL CHECK (tipo IN ('alerta', 'recordatorio', 'logro', 'info')),
             fecha TEXT NOT NULL,
             leida INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
@@ -167,6 +167,8 @@ export class Notification {
 
   static async crearNotificacion(userId, titulo, descripcion, tipo, fecha) {
     try {
+      console.log('📝 Notification.crearNotificacion:', { userId, titulo, tipo, fecha });
+      
       if (Platform.OS === 'web') {
         return this._crearNotificacionWeb(userId, titulo, descripcion, tipo, fecha);
       }
@@ -177,9 +179,11 @@ export class Notification {
          VALUES (?, ?, ?, ?, ?, 0)`,
         [userId, titulo, descripcion, tipo, fecha]
       );
+      
+      console.log('✅ Notificación insertada con ID:', resultado.lastInsertRowId);
       return resultado.lastInsertRowId;
     } catch (error) {
-      console.error('Error al crear notificación:', error);
+      console.error('❌ Error al crear notificación:', error);
       throw error;
     }
   }

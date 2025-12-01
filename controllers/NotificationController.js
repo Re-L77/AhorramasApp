@@ -133,7 +133,7 @@ export class NotificationController {
 
       return {
         success: true,
-        notificaciones: resultado.sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+        notificaciones: resultado.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
       };
     } catch (error) {
       return {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,14 @@ import {
   Dimensions,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { PieChart, BarChart } from "react-native-chart-kit";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useRoute, useFocusEffect } from "@react-navigation/native";
+import { TransactionController } from "../controllers/TransactionController";
+import { BudgetController } from "../controllers/BudgetController";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -84,8 +88,107 @@ const DATA = [{ id: "1", title: "Item 1" }];
 
 export default function HomeScreen() {
   const [expandedChart, setExpandedChart] = useState("pie");
+  const [cargando, setCargando] = useState(true);
+  const [balanceTotal, setBalanceTotal] = useState(0);
+  const [totalIngresos, setTotalIngresos] = useState(0);
+  const [totalGastos, setTotalGastos] = useState(0);
+  const [dataPie, setDataPie] = useState([]);
+  const [dataBar, setDataBar] = useState({
+    labels: ["Ingresos", "Gastos"],
+    datasets: [
+      {
+        data: [0, 0],
+        colors: [(opacity = 1) => "#6366F1", (opacity = 1) => "#F97316"],
+      },
+    ],
+  });
+  const route = useRoute();
+  const userId = route.params?.userId;
 
-  return (
+  useEffect(() => {
+    cargarDatos();
+  }, [userId]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Recargar datos cada vez que la pantalla obtiene el foco
+      cargarDatos();
+    }, [userId])
+  );
+
+  const cargarDatos = async () => {
+    try {
+      setCargando(true);
+      console.log('Cargando datos para userId:', userId);
+
+      // Obtener transacciones del usuario
+      const resultadoTransacciones = await TransactionController.obtenerTransacciones(userId);
+      console.log('Resultado transacciones:', resultadoTransacciones);
+
+      // Obtener presupuestos del usuario
+      const resultadoPresupuestos = await BudgetController.obtenerPresupuestos(userId);
+
+      if (resultadoTransacciones.success && resultadoTransacciones.transacciones) {
+        const transacciones = resultadoTransacciones.transacciones;
+
+        // Calcular totales
+        let ingresos = 0;
+        let gastos = 0;
+        const categoriaGastos = {};
+
+        transacciones.forEach((trans) => {
+          if (trans.tipo === "ingreso") {
+            ingresos += trans.monto;
+          } else {
+            gastos += trans.monto;
+            const categoria = trans.categoria || "Otros";
+            categoriaGastos[categoria] = (categoriaGastos[categoria] || 0) + trans.monto;
+          }
+        });
+
+        const balance = ingresos - gastos;
+
+        setTotalIngresos(ingresos);
+        setTotalGastos(gastos);
+        setBalanceTotal(balance);
+
+        // Actualizar gráfico de barras
+        setDataBar({
+          labels: ["Ingresos", "Gastos"],
+          datasets: [
+            {
+              data: [ingresos, gastos],
+              colors: [(opacity = 1) => "#10B981", (opacity = 1) => "#F97316"],
+            },
+          ],
+        });
+
+        // Construir datos para gráfico de pastel
+        const pieData = Object.entries(categoriaGastos).map(([categoria, monto]) => ({
+          name: categoria,
+          population: monto,
+          color: colors[categoria] || "#6366F1",
+          legendFontColor: "#1F2937",
+          legendFontSize: 13,
+        }));
+
+        setDataPie(pieData.length > 0 ? pieData : [
+          {
+            name: "Sin gastos",
+            population: 1,
+            color: "#E5E7EB",
+            legendFontColor: "#1F2937",
+            legendFontSize: 13,
+          },
+        ]);
+      }
+
+      setCargando(false);
+    } catch (error) {
+      console.error("Error al cargar datos:", error);
+      setCargando(false);
+    }
+  }; return (
     <SafeAreaView style={styles.container}>
       <FlatList
         data={DATA}
@@ -99,20 +202,20 @@ export default function HomeScreen() {
               {/* Balance Principal - Lo más importante */}
               <View style={styles.balanceContainer}>
                 <Text style={styles.balanceLabel}>Balance Total</Text>
-                <Text style={styles.balanceAmount}>$1,000.00</Text>
+                <Text style={styles.balanceAmount}>${balanceTotal.toFixed(2)}</Text>
               </View>
 
               {/* Stats Esenciales - Solo 2 items */}
               <View style={styles.statsGrid}>
                 <View style={styles.statCard}>
                   <Text style={styles.statIcon}>📈</Text>
-                  <Text style={styles.statAmountIncome}>+$6,000</Text>
+                  <Text style={styles.statAmountIncome}>+${totalIngresos.toFixed(2)}</Text>
                   <Text style={styles.statLabel}>Ingresos</Text>
                 </View>
 
                 <View style={styles.statCard}>
                   <Text style={styles.statIcon}>📉</Text>
-                  <Text style={styles.statAmountExpense}>-$5,000</Text>
+                  <Text style={styles.statAmountExpense}>-${totalGastos.toFixed(2)}</Text>
                   <Text style={styles.statLabel}>Gastos</Text>
                 </View>
               </View>
@@ -120,76 +223,84 @@ export default function HomeScreen() {
 
             {/* Chart Toggle - Limpio y simple */}
             <View style={styles.chartsContainer}>
-              <View style={styles.chartToggleContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.chartToggleBtn,
-                    expandedChart === "pie" && styles.chartToggleBtnActive,
-                  ]}
-                  onPress={() => setExpandedChart("pie")}
-                >
-                  <Text
-                    style={[
-                      styles.chartToggleBtnText,
-                      expandedChart === "pie" && styles.chartToggleBtnTextActive,
-                    ]}
-                  >
-                    {expandedChart === "pie" ? "● Distribución" : "○ Distribución"}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.chartToggleBtn,
-                    expandedChart === "bar" && styles.chartToggleBtnActive,
-                  ]}
-                  onPress={() => setExpandedChart("bar")}
-                >
-                  <Text
-                    style={[
-                      styles.chartToggleBtnText,
-                      expandedChart === "bar" && styles.chartToggleBtnTextActive,
-                    ]}
-                  >
-                    {expandedChart === "bar" ? "● Comparativa" : "○ Comparativa"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Pie Chart */}
-              {expandedChart === "pie" && (
-                <View style={styles.chartSection}>
-                  <View style={styles.chartWrapper}>
-                    <PieChart
-                      data={dataPie}
-                      width={screenWidth - 60}
-                      height={200}
-                      chartConfig={chartConfig}
-                      accessor={"population"}
-                      backgroundColor={"transparent"}
-                      paddingLeft={"10"}
-                      absolute
-                    />
-                  </View>
+              {cargando ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="large" color="#1089ff" />
                 </View>
-              )}
+              ) : (
+                <>
+                  <View style={styles.chartToggleContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.chartToggleBtn,
+                        expandedChart === "pie" && styles.chartToggleBtnActive,
+                      ]}
+                      onPress={() => setExpandedChart("pie")}
+                    >
+                      <Text
+                        style={[
+                          styles.chartToggleBtnText,
+                          expandedChart === "pie" && styles.chartToggleBtnTextActive,
+                        ]}
+                      >
+                        {expandedChart === "pie" ? "● Distribución" : "○ Distribución"}
+                      </Text>
+                    </TouchableOpacity>
 
-              {/* Bar Chart */}
-              {expandedChart === "bar" && (
-                <View style={styles.chartSection}>
-                  <View style={styles.chartWrapper}>
-                    <BarChart
-                      data={dataBar}
-                      width={screenWidth - 60}
-                      height={200}
-                      yAxisLabel="$"
-                      chartConfig={chartConfig}
-                      verticalLabelRotation={0}
-                      showValuesOnTopOfBars
-                      fromZero
-                    />
+                    <TouchableOpacity
+                      style={[
+                        styles.chartToggleBtn,
+                        expandedChart === "bar" && styles.chartToggleBtnActive,
+                      ]}
+                      onPress={() => setExpandedChart("bar")}
+                    >
+                      <Text
+                        style={[
+                          styles.chartToggleBtnText,
+                          expandedChart === "bar" && styles.chartToggleBtnTextActive,
+                        ]}
+                      >
+                        {expandedChart === "bar" ? "● Comparativa" : "○ Comparativa"}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                </View>
+
+                  {/* Pie Chart */}
+                  {expandedChart === "pie" && dataPie.length > 0 && (
+                    <View style={styles.chartSection}>
+                      <View style={styles.chartWrapper}>
+                        <PieChart
+                          data={dataPie}
+                          width={screenWidth - 60}
+                          height={200}
+                          chartConfig={chartConfig}
+                          accessor={"population"}
+                          backgroundColor={"transparent"}
+                          paddingLeft={"10"}
+                          absolute
+                        />
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Bar Chart */}
+                  {expandedChart === "bar" && (
+                    <View style={styles.chartSection}>
+                      <View style={styles.chartWrapper}>
+                        <BarChart
+                          data={dataBar}
+                          width={screenWidth - 60}
+                          height={200}
+                          yAxisLabel="$"
+                          chartConfig={chartConfig}
+                          verticalLabelRotation={0}
+                          showValuesOnTopOfBars
+                          fromZero
+                        />
+                      </View>
+                    </View>
+                  )}
+                </>
               )}
             </View>
           </>
@@ -209,6 +320,12 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 80,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 100,
   },
 
   // Header Card - Minimalista

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,71 +6,103 @@ import {
   FlatList,
   TouchableOpacity,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRoute, useFocusEffect } from "@react-navigation/native";
+import { NotificationController } from "../controllers/NotificationController";
 
 export default function NotificationsScreen() {
-  const [notifications, setNotifications] = useState([
-    {
-      id: "1",
-      type: "presupuesto",
-      title: "⚠️ Presupuesto excedido",
-      message: "Has excedido el presupuesto de Comida",
-      timestamp: "Hace 2 horas",
-      read: false,
-      color: "#DC2626",
-    },
-    {
-      id: "2",
-      type: "ingreso",
-      title: "✅ Ingreso registrado",
-      message: "Se registró un ingreso de $1,200 (Sueldo)",
-      timestamp: "Hace 5 horas",
-      read: false,
-      color: "#059669",
-    },
-    {
-      id: "3",
-      type: "gasto",
-      title: "📊 Gasto registrado",
-      message: "Se registró un gasto de $50 (Transporte)",
-      timestamp: "Hace 1 día",
-      read: true,
-      color: "#1089ff",
-    },
-    {
-      id: "4",
-      type: "recordatorio",
-      title: "🔔 Recordatorio",
-      message: "Recuerda revisar tus presupuestos mensuales",
-      timestamp: "Hace 2 días",
-      read: true,
-      color: "#F97316",
-    },
-    {
-      id: "5",
-      type: "ahorro",
-      title: "🎉 Meta de ahorro alcanzada",
-      message: "¡Felicidades! Alcanzaste tu meta de ahorro",
-      timestamp: "Hace 3 días",
-      read: true,
-      color: "#10B981",
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const route = useRoute();
+  const userId = route.params?.userId;
+
+  useEffect(() => {
+    cargarNotificaciones();
+  }, [userId]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // Recargar notificaciones cada vez que la pantalla obtiene el foco
+      cargarNotificaciones();
+    }, [userId])
+  );
+
+  const cargarNotificaciones = async () => {
+    try {
+      setCargando(true);
+      console.log('Cargando notificaciones para userId:', userId);
+      const resultado = await NotificationController.obtenerNotificaciones(userId);
+      console.log('Resultado notificaciones:', resultado);
+
+      if (resultado.success && resultado.notificaciones) {
+        // Mapear notificaciones de BD a formato visual
+        const notificacionesFormateadas = resultado.notificaciones.map((notif) => ({
+          id: notif.id.toString(),
+          type: notif.tipo || "recordatorio",
+          title: notif.titulo,
+          message: notif.contenido,
+          timestamp: new Date(notif.fechaCreacion).toLocaleDateString('es-ES'),
+          read: notif.leida === 1,
+          color: getColorByType(notif.tipo),
+          icon: getIconByType(notif.tipo),
+        }));
+
+        setNotifications(notificacionesFormateadas);
+      }
+      setCargando(false);
+    } catch (error) {
+      console.error("Error al cargar notificaciones:", error);
+      setCargando(false);
+    }
+  };
+
+  const getColorByType = (tipo) => {
+    const colores = {
+      presupuesto: "#DC2626",
+      ingreso: "#059669",
+      gasto: "#1089ff",
+      recordatorio: "#F97316",
+      ahorro: "#10B981",
+    };
+    return colores[tipo] || "#1089ff";
+  };
+
+  const getIconByType = (tipo) => {
+    const iconos = {
+      ingreso: "✅",
+      gasto: "📊",
+      presupuesto: "⚠️",
+      ahorro: "🎉",
+      recordatorio: "👋",
+    };
+    return iconos[tipo] || "📬";
+  };
 
   const handleMarkAsRead = (id) => {
-    setNotifications(
-      notifications.map((notif) =>
-        notif.id === id ? { ...notif, read: true } : notif
-      )
-    );
+    const notificacion = notifications.find(n => n.id === id);
+    if (notificacion) {
+      NotificationController.marcarComoLeida(parseInt(id));
+      setNotifications(
+        notifications.map((notif) =>
+          notif.id === id ? { ...notif, read: true } : notif
+        )
+      );
+    }
   };
 
   const handleDelete = (id) => {
+    NotificationController.eliminarNotificacion(parseInt(id));
     setNotifications(notifications.filter((notif) => notif.id !== id));
   };
 
   const handleMarkAllAsRead = () => {
+    notifications.forEach((notif) => {
+      if (!notif.read) {
+        NotificationController.marcarComoLeida(parseInt(notif.id));
+      }
+    });
     setNotifications(notifications.map((notif) => ({ ...notif, read: true })));
   };
 
@@ -78,88 +110,96 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={notifications}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <>
-            {/* Header Card */}
-            <View style={styles.headerCard}>
-              <View style={styles.headerTitleRow}>
-                <Text style={styles.headerTitle}>🔔 Notificaciones</Text>
-                {unreadCount > 0 && (
-                  <TouchableOpacity onPress={handleMarkAllAsRead}>
-                    <Text style={styles.markAllButton}>
-                      Marcar todo como leído
+      {cargando ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1089ff" />
+        </View>
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            <>
+              {/* Header Card */}
+              <View style={styles.headerCard}>
+                <View style={styles.headerTitleRow}>
+                  <Text style={styles.headerTitle}>🔔 Notificaciones</Text>
+                  {unreadCount > 0 && (
+                    <TouchableOpacity onPress={handleMarkAllAsRead}>
+                      <Text style={styles.markAllButton}>
+                        Marcar todo como leído
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Stats */}
+                <View style={styles.statsRow}>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>No leídas</Text>
+                    <Text style={[styles.statAmount, { color: "#DC2626" }]}>
+                      {unreadCount}
                     </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Stats */}
-              <View style={styles.statsRow}>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>No leídas</Text>
-                  <Text style={[styles.statAmount, { color: "#DC2626" }]}>
-                    {unreadCount}
-                  </Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Total</Text>
-                  <Text style={[styles.statAmount, { color: "#1089ff" }]}>
-                    {notifications.length}
-                  </Text>
+                  </View>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Total</Text>
+                    <Text style={[styles.statAmount, { color: "#1089ff" }]}>
+                      {notifications.length}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </>
-        }
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.notificationCard,
-              !item.read && styles.notificationCardUnread,
-            ]}
-          >
+            </>
+          }
+          renderItem={({ item }) => (
             <View
-              style={[styles.colorIndicator, { backgroundColor: item.color }]}
-            />
+              style={[
+                styles.notificationCard,
+                !item.read && styles.notificationCardUnread,
+              ]}
+            >
+              <View
+                style={[styles.colorIndicator, { backgroundColor: item.color }]}
+              />
 
-            <View style={styles.notificationContent}>
-              <Text style={styles.notificationTitle}>{item.title}</Text>
-              <Text style={styles.notificationMessage}>{item.message}</Text>
-              <Text style={styles.notificationTime}>{item.timestamp}</Text>
-            </View>
+              <Text style={styles.notificationIcon}>{item.icon}</Text>
 
-            <View style={styles.notificationActions}>
-              {!item.read && (
+              <View style={styles.notificationContent}>
+                <Text style={styles.notificationTitle}>{item.title}</Text>
+                <Text style={styles.notificationMessage}>{item.message}</Text>
+                <Text style={styles.notificationTime}>{item.timestamp}</Text>
+              </View>
+
+              <View style={styles.notificationActions}>
+                {!item.read && (
+                  <Pressable
+                    onPress={() => handleMarkAsRead(item.id)}
+                    style={styles.actionButton}
+                  >
+                    <Text style={styles.actionText}>✓</Text>
+                  </Pressable>
+                )}
                 <Pressable
-                  onPress={() => handleMarkAsRead(item.id)}
-                  style={styles.actionButton}
+                  onPress={() => handleDelete(item.id)}
+                  style={styles.deleteButton}
                 >
-                  <Text style={styles.actionText}>✓</Text>
+                  <Text style={styles.deleteText}>✕</Text>
                 </Pressable>
-              )}
-              <Pressable
-                onPress={() => handleDelete(item.id)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.deleteText}>✕</Text>
-              </Pressable>
+              </View>
             </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>📭 Sin notificaciones</Text>
-            <Text style={styles.emptyText}>
-              Aquí aparecerán tus notificaciones
-            </Text>
-          </View>
-        }
-        contentContainerStyle={styles.listContainer}
-        scrollEnabled={true}
-      />
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>📭 Sin notificaciones</Text>
+              <Text style={styles.emptyText}>
+                Aquí aparecerán tus notificaciones
+              </Text>
+            </View>
+          }
+          contentContainerStyle={styles.listContainer}
+          scrollEnabled={true}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -167,6 +207,11 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9FAFB" },
   listContainer: { paddingHorizontal: 15, paddingBottom: 100 },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
   // Header Card
   headerCard: {
@@ -245,6 +290,10 @@ const styles = StyleSheet.create({
     width: 4,
     height: "100%",
     borderRadius: 2,
+    marginRight: 12,
+  },
+  notificationIcon: {
+    fontSize: 24,
     marginRight: 12,
   },
   notificationContent: {

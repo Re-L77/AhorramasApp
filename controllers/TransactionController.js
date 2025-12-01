@@ -46,6 +46,21 @@ export class TransactionController {
         fecha
       );
 
+      // Crear notificación automática
+      const tipoNotif = tipo === 'ingreso' ? 'ingreso' : 'gasto';
+      const titulo = tipo === 'ingreso' ? '✅ Ingreso registrado' : '📊 Gasto registrado';
+      const contenido = tipo === 'ingreso'
+        ? `Se registró un ingreso de $${monto} (${descripcion})`
+        : `Se registró un gasto de $${monto} (${categoria})`;
+
+      await Notification.crearNotificacion(
+        userId,
+        tipoNotif,
+        titulo,
+        contenido,
+        fecha
+      );
+
       // Si es egreso, actualizar presupuesto
       if (tipo === 'egreso') {
         await this.actualizarPresupuesto(userId, categoria, monto);
@@ -93,6 +108,15 @@ export class TransactionController {
       transacciones.push(nuevaTransaccion);
       localStorage.setItem('transacciones', JSON.stringify(transacciones));
 
+      // Crear notificación automática en web
+      const tipoNotif = tipo === 'ingreso' ? 'ingreso' : 'gasto';
+      const titulo = tipo === 'ingreso' ? '✅ Ingreso registrado' : '📊 Gasto registrado';
+      const contenido = tipo === 'ingreso'
+        ? `Se registró un ingreso de $${monto} (${descripcion})`
+        : `Se registró un gasto de $${monto} (${categoria})`;
+
+      this._crearNotificacionWeb(userId, tipoNotif, titulo, contenido);
+
       // Actualizar presupuesto si es egreso
       if (tipo === 'egreso') {
         this._actualizarPresupuestoWeb(userId, categoria, monto);
@@ -108,6 +132,33 @@ export class TransactionController {
         success: false,
         error: error.message
       };
+    }
+  }
+
+  /**
+   * Crear notificación en web
+   */
+  static _crearNotificacionWeb(userId, tipo, titulo, contenido) {
+    try {
+      const notificacionesJSON = localStorage.getItem('notificaciones');
+      const notificaciones = notificacionesJSON ? JSON.parse(notificacionesJSON) : [];
+
+      const nuevoId = notificaciones.length > 0 ? Math.max(...notificaciones.map(n => n.id)) + 1 : 1;
+
+      const nuevaNotificacion = {
+        id: nuevoId,
+        userId,
+        tipo,
+        titulo,
+        contenido,
+        fechaCreacion: new Date().toISOString(),
+        leida: 0
+      };
+
+      notificaciones.push(nuevaNotificacion);
+      localStorage.setItem('notificaciones', JSON.stringify(notificaciones));
+    } catch (error) {
+      console.error('Error creating notification in web:', error);
     }
   }
 

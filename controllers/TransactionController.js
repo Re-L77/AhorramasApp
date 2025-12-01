@@ -6,25 +6,18 @@
  */
 
 import { Platform } from 'react-native';
-
-let Transaction = null;
-let Budget = null;
-let Notification = null;
-
-if (Platform.OS !== 'web') {
-  Transaction = require('../models/Transaction').Transaction;
-  Budget = require('../models/Budget').Budget;
-  Notification = require('../models/Notification').Notification;
-}
+import { Transaction } from '../models/Transaction';
+import { Budget } from '../models/Budget';
+import { Notification } from '../models/Notification';
 
 export class TransactionController {
   /**
    * Crear una nueva transacción
    */
-  static async crearTransaccion(userId, tipo, monto, descripcion, categoria) {
+  static async crearTransaccion(userId, tipo, monto, descripcion, categoria, icono = null) {
     try {
       if (Platform.OS === 'web') {
-        return this._crearTransaccionWeb(userId, tipo, monto, descripcion, categoria);
+        return this._crearTransaccionWeb(userId, tipo, monto, descripcion, categoria, icono);
       }
 
       // Validar datos
@@ -43,11 +36,12 @@ export class TransactionController {
         monto,
         descripcion,
         categoria,
-        fecha
+        fecha,
+        icono
       );
 
       // Crear notificación automática
-      const tipoNotif = tipo === 'ingreso' ? 'ingreso' : 'gasto';
+      const tipoNotif = tipo === 'ingreso' ? 'logro' : 'info';
       const titulo = tipo === 'ingreso' ? '✅ Ingreso registrado' : '📊 Gasto registrado';
       const contenido = tipo === 'ingreso'
         ? `Se registró un ingreso de $${monto} (${descripcion})`
@@ -55,9 +49,9 @@ export class TransactionController {
 
       await Notification.crearNotificacion(
         userId,
-        tipoNotif,
         titulo,
         contenido,
+        tipoNotif,
         fecha
       );
 
@@ -82,7 +76,7 @@ export class TransactionController {
   /**
    * Crear transacción en web (localStorage)
    */
-  static _crearTransaccionWeb(userId, tipo, monto, descripcion, categoria) {
+  static _crearTransaccionWeb(userId, tipo, monto, descripcion, categoria, icono = null) {
     try {
       if (!['ingreso', 'egreso'].includes(tipo)) {
         throw new Error('El tipo debe ser "ingreso" o "egreso"');
@@ -102,20 +96,21 @@ export class TransactionController {
         monto: parseFloat(monto),
         descripcion,
         categoria,
-        fecha: new Date().toISOString()
+        fecha: new Date().toISOString(),
+        icono
       };
 
       transacciones.push(nuevaTransaccion);
       localStorage.setItem('transacciones', JSON.stringify(transacciones));
 
       // Crear notificación automática en web
-      const tipoNotif = tipo === 'ingreso' ? 'ingreso' : 'gasto';
+      const tipoNotif = tipo === 'ingreso' ? 'logro' : 'info';
       const titulo = tipo === 'ingreso' ? '✅ Ingreso registrado' : '📊 Gasto registrado';
       const contenido = tipo === 'ingreso'
         ? `Se registró un ingreso de $${monto} (${descripcion})`
         : `Se registró un gasto de $${monto} (${categoria})`;
 
-      this._crearNotificacionWeb(userId, tipoNotif, titulo, contenido);
+      this._crearNotificacionWeb(userId, titulo, contenido, tipoNotif);
 
       // Actualizar presupuesto si es egreso
       if (tipo === 'egreso') {
@@ -138,7 +133,7 @@ export class TransactionController {
   /**
    * Crear notificación en web
    */
-  static _crearNotificacionWeb(userId, tipo, titulo, contenido) {
+  static _crearNotificacionWeb(userId, titulo, contenido, tipo = 'info') {
     try {
       const notificacionesJSON = localStorage.getItem('notificaciones');
       const notificaciones = notificacionesJSON ? JSON.parse(notificacionesJSON) : [];
@@ -148,10 +143,10 @@ export class TransactionController {
       const nuevaNotificacion = {
         id: nuevoId,
         userId,
-        tipo,
         titulo,
-        contenido,
-        fechaCreacion: new Date().toISOString(),
+        descripcion: contenido,
+        tipo,
+        fecha: new Date().toISOString(),
         leida: 0
       };
 
@@ -316,10 +311,10 @@ export class TransactionController {
   /**
    * Actualizar transacción
    */
-  static async actualizarTransaccion(transaccionId, tipo, monto, descripcion, categoria) {
+  static async actualizarTransaccion(transaccionId, tipo, monto, descripcion, categoria, icono = null) {
     try {
       if (Platform.OS === 'web') {
-        return this._actualizarTransaccionWeb(transaccionId, tipo, monto, descripcion, categoria);
+        return this._actualizarTransaccionWeb(transaccionId, tipo, monto, descripcion, categoria, icono);
       }
 
       if (!['ingreso', 'egreso'].includes(tipo)) {
@@ -330,7 +325,24 @@ export class TransactionController {
         throw new Error('El monto debe ser mayor a 0');
       }
 
-      await Transaction.actualizarTransaccion(transaccionId, tipo, monto, descripcion, categoria);
+      // Obtener transacción antigua para comparar
+      const transaccionAntigua = await Transaction.obtenerTransaccionPorId(transaccionId);
+
+      await Transaction.actualizarTransaccion(transaccionId, tipo, monto, descripcion, categoria, icono);
+
+      // Actualizar presupuesto si es egreso y cambió el monto o categoría
+      if (tipo === 'egreso' && transaccionAntigua) {
+        const diferenciaMonto = monto - transaccionAntigua.monto;
+
+        // Si cambió la categoría, restar del presupuesto antiguo y sumar al nuevo
+        if (transaccionAntigua.categoria !== categoria) {
+          await this.actualizarPresupuesto(transaccionAntigua.userId, transaccionAntigua.categoria, -transaccionAntigua.monto);
+          await this.actualizarPresupuesto(transaccionAntigua.userId, categoria, monto);
+        } else if (diferenciaMonto !== 0) {
+          // Si no cambió la categoría, solo actualizar la diferencia
+          await this.actualizarPresupuesto(transaccionAntigua.userId, categoria, diferenciaMonto);
+        }
+      }
 
       return {
         success: true,
@@ -347,7 +359,7 @@ export class TransactionController {
   /**
    * Actualizar transacción en web
    */
-  static _actualizarTransaccionWeb(transaccionId, tipo, monto, descripcion, categoria) {
+  static _actualizarTransaccionWeb(transaccionId, tipo, monto, descripcion, categoria, icono = null) {
     try {
       if (!['ingreso', 'egreso'].includes(tipo)) {
         throw new Error('El tipo debe ser "ingreso" o "egreso"');
@@ -364,15 +376,32 @@ export class TransactionController {
         throw new Error('Transacción no encontrada');
       }
 
+      const transaccionAntigua = transacciones[index];
+
       transacciones[index] = {
         ...transacciones[index],
         tipo,
         monto: parseFloat(monto),
         descripcion,
-        categoria
+        categoria,
+        icono
       };
 
       localStorage.setItem('transacciones', JSON.stringify(transacciones));
+
+      // Actualizar presupuesto si es egreso y cambió el monto o categoría
+      if (tipo === 'egreso') {
+        const diferenciaMonto = parseFloat(monto) - transaccionAntigua.monto;
+
+        // Si cambió la categoría, restar del presupuesto antiguo y sumar al nuevo
+        if (transaccionAntigua.categoria !== categoria) {
+          this._actualizarPresupuestoWeb(transaccionAntigua.userId, transaccionAntigua.categoria, -transaccionAntigua.monto);
+          this._actualizarPresupuestoWeb(transaccionAntigua.userId, categoria, parseFloat(monto));
+        } else if (diferenciaMonto !== 0) {
+          // Si no cambió la categoría, solo actualizar la diferencia
+          this._actualizarPresupuestoWeb(transaccionAntigua.userId, categoria, diferenciaMonto);
+        }
+      }
 
       return {
         success: true,
@@ -403,6 +432,24 @@ export class TransactionController {
 
       await Transaction.eliminarTransaccion(transaccionId);
 
+      // Crear notificación de eliminación
+      const monto = transaccion.monto || 0;
+      const titulo = '🗑️ Transacción eliminada';
+      const contenido = `Se eliminó la transacción de ${transaccion.categoria} por $${monto}`;
+
+      await Notification.crearNotificacion(
+        userId,
+        titulo,
+        contenido,
+        'info',
+        new Date().toISOString()
+      );
+
+      // Si era un egreso, restar del presupuesto
+      if (transaccion.tipo === 'egreso') {
+        await this.actualizarPresupuesto(userId, transaccion.categoria, -transaccion.monto);
+      }
+
       return {
         success: true,
         message: 'Transacción eliminada correctamente'
@@ -429,6 +476,18 @@ export class TransactionController {
 
       const filtradas = transacciones.filter(t => t.id !== transaccionId);
       localStorage.setItem('transacciones', JSON.stringify(filtradas));
+
+      // Crear notificación de eliminación
+      const monto = transaccion.monto || 0;
+      const titulo = '🗑️ Transacción eliminada';
+      const contenido = `Se eliminó la transacción de ${transaccion.categoria} por $${monto}`;
+
+      this._crearNotificacionWeb(userId, titulo, contenido, 'info');
+
+      // Si era un egreso, restar del presupuesto
+      if (transaccion.tipo === 'egreso') {
+        this._actualizarPresupuestoWeb(userId, transaccion.categoria, -transaccion.monto);
+      }
 
       return {
         success: true,
@@ -522,14 +581,22 @@ export class TransactionController {
 
       if (presupuesto) {
         const nuevoMonto = presupuesto.montoActual + monto;
+        const montoAnterior = presupuesto.montoActual;
+        console.log(`💰 Actualizando presupuesto ${presupuesto.categoria}: ${montoAnterior} + ${monto} = ${nuevoMonto}`);
         await Budget.actualizarMontoActual(presupuesto.id, nuevoMonto);
 
-        // Verificar si se excedió el presupuesto
-        if (nuevoMonto > presupuesto.montoLimite) {
+        // Verificar si se excedió el presupuesto (cruzó el límite)
+        const estabaExcedido = montoAnterior > presupuesto.montoLimite;
+        const ahoraExcedido = nuevoMonto > presupuesto.montoLimite;
+
+        // Crear alerta si acaba de excederse (cruzó el límite de arriba hacia abajo no se notifica)
+        if (!estabaExcedido && ahoraExcedido) {
+          console.log(`⚠️ ALERTA: Presupuesto de ${presupuesto.categoria} excedido!`);
+          const porcentajeExceso = ((nuevoMonto - presupuesto.montoLimite) / presupuesto.montoLimite * 100).toFixed(1);
           await Notification.crearNotificacion(
             userId,
-            'Presupuesto excedido',
-            `Has excedido el presupuesto de ${categoria}`,
+            '⚠️ Presupuesto excedido',
+            `Has excedido el presupuesto de ${presupuesto.categoria} en $${(nuevoMonto - presupuesto.montoLimite).toFixed(2)} (${porcentajeExceso}% adicional)`,
             'alerta',
             new Date().toISOString()
           );
@@ -557,19 +624,27 @@ export class TransactionController {
       );
 
       if (presupuesto) {
+        const montoAnterior = presupuesto.montoActual;
         presupuesto.montoActual += monto;
+        const nuevoMonto = presupuesto.montoActual;
 
-        // Verificar si se excedió
-        if (presupuesto.montoActual > presupuesto.montoLimite) {
+        // Verificar si se excedió (cruzó el límite)
+        const estabaExcedido = montoAnterior > presupuesto.montoLimite;
+        const ahoraExcedido = nuevoMonto > presupuesto.montoLimite;
+
+        // Crear alerta solo si acaba de excederse (cruzó el límite)
+        if (!estabaExcedido && ahoraExcedido) {
+          console.log(`⚠️ ALERTA: Presupuesto de ${presupuesto.categoria} excedido!`);
+          const porcentajeExceso = ((nuevoMonto - presupuesto.montoLimite) / presupuesto.montoLimite * 100).toFixed(1);
           const notificaciones = this._obtenerNotificacionesWeb();
           notificaciones.push({
             id: notificaciones.length > 0 ? Math.max(...notificaciones.map(n => n.id)) + 1 : 1,
             userId,
-            titulo: 'Presupuesto excedido',
-            descripcion: `Has excedido el presupuesto de ${categoria}`,
+            titulo: '⚠️ Presupuesto excedido',
+            descripcion: `Has excedido el presupuesto de ${presupuesto.categoria} en $${(nuevoMonto - presupuesto.montoLimite).toFixed(2)} (${porcentajeExceso}% adicional)`,
             tipo: 'alerta',
             fecha: new Date().toISOString(),
-            leida: false
+            leida: 0
           });
           localStorage.setItem('notificaciones', JSON.stringify(notificaciones));
         }
@@ -587,5 +662,92 @@ export class TransactionController {
   static _obtenerNotificacionesWeb() {
     const notificacionesJSON = localStorage.getItem('notificaciones');
     return notificacionesJSON ? JSON.parse(notificacionesJSON) : [];
+  }
+
+  /**
+   * Recalcular presupuestos basado en transacciones existentes
+   * Útil para sincronizar datos cuando se cargan presupuestos por primera vez
+   */
+  static async recalcularPresupuestos(userId, mes, año) {
+    try {
+      if (Platform.OS === 'web') {
+        return this._recalcularPresupuestosWeb(userId, mes, año);
+      }
+
+      // Obtener todas las transacciones del usuario
+      const transacciones = await Transaction.obtenerTransaccionesUsuario(userId);
+
+      // Obtener presupuestos del mes
+      const presupuestos = await Budget.obtenerPresupuestosUsuario(userId, mes, año);
+
+      // Para cada presupuesto, recalcular el monto actual
+      for (const presupuesto of presupuestos) {
+        // Sumar todos los egresos de esa categoría en ese mes (case-insensitive)
+        const transaccionesCategoria = transacciones.filter(t => {
+          const fechaTransaccion = new Date(t.fecha);
+          const mesTransaccion = fechaTransaccion.getMonth() + 1;
+          const añoTransaccion = fechaTransaccion.getFullYear();
+          return t.tipo === 'egreso' &&
+            t.categoria.toLowerCase() === presupuesto.categoria.toLowerCase() &&
+            mesTransaccion === mes && añoTransaccion === año;
+        });
+
+        const totalMes = transaccionesCategoria.reduce((sum, t) => sum + t.monto, 0);
+
+        // Actualizar el presupuesto si cambió
+        if (totalMes !== presupuesto.montoActual) {
+          console.log(`🔄 Actualizando presupuesto ${presupuesto.categoria}: ${presupuesto.montoActual} → ${totalMes}`);
+          await Budget.actualizarMontoActual(presupuesto.id, totalMes);
+        }
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error al recalcular presupuestos:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Recalcular presupuestos en web
+   */
+  static _recalcularPresupuestosWeb(userId, mes, año) {
+    try {
+      const transaccionesJSON = localStorage.getItem('transacciones');
+      const transacciones = transaccionesJSON ? JSON.parse(transaccionesJSON) : [];
+
+      const presupuestosJSON = localStorage.getItem('presupuestos');
+      const presupuestos = presupuestosJSON ? JSON.parse(presupuestosJSON) : [];
+
+      // Filtrar presupuestos del usuario y mes
+      const presupuestosUsuario = presupuestos.filter(p => p.userId === userId && p.mes === mes && p.año === año);
+
+      for (const presupuesto of presupuestosUsuario) {
+        // Sumar todos los egresos de esa categoría en ese mes (case-insensitive)
+        const transaccionesCategoria = transacciones.filter(t => {
+          const fechaTransaccion = new Date(t.fecha);
+          const mesTransaccion = fechaTransaccion.getMonth() + 1;
+          const añoTransaccion = fechaTransaccion.getFullYear();
+          return t.userId === userId && t.tipo === 'egreso' &&
+            t.categoria.toLowerCase() === presupuesto.categoria.toLowerCase() &&
+            mesTransaccion === mes && añoTransaccion === año;
+        });
+
+        const totalMes = transaccionesCategoria.reduce((sum, t) => sum + t.monto, 0);
+
+        // Actualizar el presupuesto
+        const indexPresupuesto = presupuestos.findIndex(p => p.id === presupuesto.id);
+        if (indexPresupuesto !== -1 && totalMes !== presupuesto.montoActual) {
+          console.log(`🔄 Actualizando presupuesto ${presupuesto.categoria}: ${presupuesto.montoActual} → ${totalMes}`);
+          presupuestos[indexPresupuesto].montoActual = totalMes;
+        }
+      }
+
+      localStorage.setItem('presupuestos', JSON.stringify(presupuestos));
+      return { success: true };
+    } catch (error) {
+      console.error('Error al recalcular presupuestos en web:', error);
+      return { success: false, error: error.message };
+    }
   }
 }

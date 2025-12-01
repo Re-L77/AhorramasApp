@@ -216,6 +216,12 @@ export const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#A0A9B8",
   },
+  transactionDate: {
+    fontSize: 9,
+    fontWeight: "400",
+    color: "#D1D5DB",
+    marginTop: 2,
+  },
   transactionRight: {
     alignItems: "flex-end",
     marginLeft: 8,
@@ -404,6 +410,11 @@ export const styles = StyleSheet.create({
     borderColor: "#DC2626",
     backgroundColor: "#FEF2F2",
   },
+  descriptionInput: {
+    textAlignVertical: "top",
+    paddingTop: 12,
+    minHeight: 80,
+  },
   typeButtonsRow: {
     flexDirection: "row",
     gap: 10,
@@ -479,6 +490,33 @@ export const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 18,
+  },
+  emojiDisplayRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    gap: 12,
+  },
+  emojiDisplay: {
+    fontSize: 32,
+    fontWeight: "700",
+  },
+  emojiDisplayLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#6B7280",
+  },
+  helperText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#9CA3AF",
+    marginBottom: 10,
+    marginTop: 8,
   },
   modalFooter: {
     flexDirection: "row",
@@ -589,5 +627,37 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "700",
     color: "#FFFFFF",
+  },
+  categoriasContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  categoriaButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  categoriaButtonActive: {
+    borderColor: "#10B981",
+    backgroundColor: "#D1FAE5",
+  },
+  categoriaButtonText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  noPresupuestosText: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    textAlign: "center",
+    paddingVertical: 16,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 10,
   },
 });

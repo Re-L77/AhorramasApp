@@ -23,6 +23,8 @@ export class BudgetController {
    */
   static async crearPresupuesto(userId, categoria, montoLimite) {
     try {
+      console.log('🔵 BudgetController.crearPresupuesto iniciado:', { userId, categoria, montoLimite });
+
       if (Platform.OS === 'web') {
         return this._crearPresupuestoWeb(userId, categoria, montoLimite);
       }
@@ -47,6 +49,18 @@ export class BudgetController {
       }
 
       const budgetId = await Budget.crearPresupuesto(userId, categoria, montoLimite, mes, año);
+      console.log('✅ Presupuesto creado con ID:', budgetId);
+
+      // Crear notificación automática
+      console.log('📢 Creando notificación...');
+      await Notification.crearNotificacion(
+        userId,
+        '💰 Presupuesto creado',
+        `Presupuesto de ${categoria}: $${montoLimite}`,
+        'info',
+        new Date().toISOString()
+      );
+      console.log('✅ Notificación creada');
 
       return {
         success: true,
@@ -54,6 +68,7 @@ export class BudgetController {
         message: 'Presupuesto creado correctamente'
       };
     } catch (error) {
+      console.error('❌ Error en crearPresupuesto:', error);
       return {
         success: false,
         error: error.message
@@ -96,6 +111,20 @@ export class BudgetController {
 
       presupuestos.push(nuevoPresupuesto);
       localStorage.setItem('presupuestos', JSON.stringify(presupuestos));
+
+      // Crear notificación automática en web
+      const notificaciones = this._obtenerNotificacionesWeb();
+      const notifId = notificaciones.length > 0 ? Math.max(...notificaciones.map(n => n.id)) + 1 : 1;
+      notificaciones.push({
+        id: notifId,
+        userId,
+        titulo: '💰 Presupuesto creado',
+        descripcion: `Presupuesto de ${categoria}: $${montoLimite}`,
+        tipo: 'info',
+        fecha: new Date().toISOString(),
+        leida: false
+      });
+      localStorage.setItem('notificaciones', JSON.stringify(notificaciones));
 
       return {
         success: true,
@@ -547,5 +576,13 @@ export class BudgetController {
         error: error.message
       };
     }
+  }
+
+  /**
+   * Helper para obtener notificaciones en web
+   */
+  static _obtenerNotificacionesWeb() {
+    const notificacionesJSON = localStorage.getItem('notificaciones');
+    return notificacionesJSON ? JSON.parse(notificacionesJSON) : [];
   }
 }

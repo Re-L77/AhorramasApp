@@ -20,8 +20,11 @@ export function TransactionFormModal({
   onChangeMonto,
   onChangeTipo,
   onChangeIcono,
+  onChangeDescripcion,
   onClose,
   onSave,
+  getIconoByCategoria,
+  presupuestos = [],
 }) {
   return (
     <Modal
@@ -80,20 +83,30 @@ export function TransactionFormModal({
                   <Text style={styles.label}>Categoría</Text>
                   {errors.categoria ? (
                     <Text style={styles.errorText}>{errors.categoria}</Text>
-                  ) : (
-                    <Text style={styles.charCount}>
-                      {formData.categoria.length}/30
-                    </Text>
-                  )}
+                  ) : null}
                 </View>
-                <TextInput
-                  style={[styles.input, errors.categoria && styles.inputError]}
-                  placeholder="Ej: Alimentación, Transporte..."
-                  value={formData.categoria}
-                  onChangeText={onChangeCategoria}
-                  placeholderTextColor="#D1D5DB"
-                  maxLength={30}
-                />
+                {presupuestos && presupuestos.length > 0 ? (
+                  <View style={styles.categoriasContainer}>
+                    {presupuestos.map((presupuesto) => (
+                      <TouchableOpacity
+                        key={presupuesto.id}
+                        style={[
+                          styles.categoriaButton,
+                          formData.categoria === presupuesto.categoria && styles.categoriaButtonActive,
+                        ]}
+                        onPress={() => onChangeCategoria(presupuesto.categoria)}
+                      >
+                        <Text style={styles.categoriaButtonText}>
+                          {presupuesto.categoria}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.noPresupuestosText}>
+                    No hay presupuestos disponibles
+                  </Text>
+                )}
               </View>
 
               {/* Monto */}
@@ -122,11 +135,40 @@ export function TransactionFormModal({
                 </View>
               </View>
 
+              {/* Descripción */}
+              <View style={styles.formGroup}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>Descripción (Opcional)</Text>
+                  <Text style={styles.charCount}>
+                    {(formData.descripcion || "").length}/100
+                  </Text>
+                </View>
+                <TextInput
+                  style={[styles.input, styles.descriptionInput]}
+                  placeholder="Ej: Compras en el supermercado..."
+                  value={formData.descripcion || ""}
+                  onChangeText={onChangeDescripcion}
+                  placeholderTextColor="#D1D5DB"
+                  maxLength={100}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+
               {/* Icono */}
               <View style={styles.formGroup}>
-                <Text style={styles.label}>Icono</Text>
+                <Text style={styles.label}>Icono (Opcional)</Text>
+                <View style={styles.emojiDisplayRow}>
+                  <Text style={styles.emojiDisplay}>
+                    {formData.icono || (getIconoByCategoria ? getIconoByCategoria(formData.categoria) : "💰")}
+                  </Text>
+                  <Text style={styles.emojiDisplayLabel}>
+                    {formData.icono ? "Personalizado" : formData.categoria || "Automático"}
+                  </Text>
+                </View>
+                <Text style={styles.helperText}>Selecciona uno o deja en blanco para automático</Text>
                 <View style={styles.emojiGrid}>
-                  {["💰", "💼", "🍔", "🚕", "💻", "🎬", "💊", "🏪"].map(
+                  {["💰", "💼", "🍔", "🚕", "💻", "🎬", "💊", "🏪", "⛽", "🏠", "📚", "👕", "💡", "🎵"].map(
                     (emoji) => (
                       <TouchableOpacity
                         key={emoji}

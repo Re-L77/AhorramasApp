@@ -18,6 +18,11 @@ export function TransactionListItem({ item, onEdit, onDelete }) {
           <View style={styles.transactionDetails}>
             <Text style={styles.transactionCategory}>{item.categoria}</Text>
             <Text style={styles.transactionType}>{item.tipo}</Text>
+            {item.fecha && (
+              <Text style={styles.transactionDate}>
+                {new Date(item.fecha).toLocaleDateString('es-ES')}
+              </Text>
+            )}
           </View>
         </View>
 

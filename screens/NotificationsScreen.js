@@ -9,61 +9,81 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRoute, useFocusEffect } from "@react-navigation/native";
-import { NotificationController } from "../controllers/NotificationController";
+import { useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "../hooks/useAuth";
+import { Notification } from "../models/Notification";
 
 export default function NotificationsScreen() {
+  const { usuario } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const route = useRoute();
-  const userId = route.params?.userId;
 
   useEffect(() => {
-    cargarNotificaciones();
-  }, [userId]);
+    if (usuario?.id) {
+      cargarNotificaciones();
+    }
+  }, [usuario?.id]);
 
   useFocusEffect(
     React.useCallback(() => {
       // Recargar notificaciones cada vez que la pantalla obtiene el foco
-      cargarNotificaciones();
-    }, [userId])
+      if (usuario?.id) {
+        cargarNotificaciones();
+      }
+    }, [usuario?.id])
   );
 
   const cargarNotificaciones = async () => {
     try {
       setCargando(true);
-      console.log('Cargando notificaciones para userId:', userId);
-      const resultado = await NotificationController.obtenerNotificaciones(userId);
-      console.log('Resultado notificaciones:', resultado);
+      if (!usuario?.id) {
+        console.log('Usuario no disponible');
+        setCargando(false);
+        return;
+      }
 
-      if (resultado.success && resultado.notificaciones) {
+      console.log('Cargando notificaciones para userId:', usuario.id);
+      const notificacionesData = await Notification.obtenerNotificacionesUsuario(usuario.id);
+      console.log('Notificaciones obtenidas:', notificacionesData);
+
+      if (notificacionesData && Array.isArray(notificacionesData)) {
         // Mapear notificaciones de BD a formato visual
-        const notificacionesFormateadas = resultado.notificaciones.map((notif) => ({
-          id: notif.id.toString(),
+        const notificacionesFormateadas = notificacionesData.map((notif) => ({
+          id: notif.id?.toString() || Date.now().toString(),
           type: notif.tipo || "recordatorio",
-          title: notif.titulo,
-          message: notif.contenido,
-          timestamp: new Date(notif.fechaCreacion).toLocaleDateString('es-ES'),
+          title: notif.titulo || "Notificación",
+          message: notif.descripcion || notif.contenido || "",
+          timestamp: new Date(notif.fecha).toLocaleDateString('es-ES'),
+          fecha: new Date(notif.fecha), // Para ordenamiento
           read: notif.leida === 1,
           color: getColorByType(notif.tipo),
           icon: getIconByType(notif.tipo),
         }));
 
+        // Ordenar de más reciente a más antigua
+        notificacionesFormateadas.sort((a, b) => b.fecha - a.fecha);
+
         setNotifications(notificacionesFormateadas);
+      } else {
+        setNotifications([]);
       }
       setCargando(false);
     } catch (error) {
       console.error("Error al cargar notificaciones:", error);
+      setNotifications([]);
       setCargando(false);
     }
   };
 
   const getColorByType = (tipo) => {
     const colores = {
+      alerta: "#DC2626",
+      recordatorio: "#F97316",
+      logro: "#10B981",
+      info: "#1089ff",
       presupuesto: "#DC2626",
       ingreso: "#059669",
       gasto: "#1089ff",
-      recordatorio: "#F97316",
       ahorro: "#10B981",
     };
     return colores[tipo] || "#1089ff";
@@ -71,39 +91,49 @@ export default function NotificationsScreen() {
 
   const getIconByType = (tipo) => {
     const iconos = {
+      alerta: "⚠️",
+      recordatorio: "🎯",
+      logro: "🏆",
+      info: "📊",
       ingreso: "✅",
       gasto: "📊",
       presupuesto: "⚠️",
       ahorro: "🎉",
-      recordatorio: "👋",
     };
     return iconos[tipo] || "📬";
   };
 
-  const handleMarkAsRead = (id) => {
-    const notificacion = notifications.find(n => n.id === id);
-    if (notificacion) {
-      NotificationController.marcarComoLeida(parseInt(id));
+  const handleMarkAsRead = async (id) => {
+    try {
+      await Notification.marcarComoLeida(parseInt(id));
       setNotifications(
         notifications.map((notif) =>
           notif.id === id ? { ...notif, read: true } : notif
         )
       );
+    } catch (error) {
+      console.error("Error al marcar como leída:", error);
     }
   };
 
-  const handleDelete = (id) => {
-    NotificationController.eliminarNotificacion(parseInt(id));
-    setNotifications(notifications.filter((notif) => notif.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await Notification.eliminarNotificacion(parseInt(id));
+      setNotifications(notifications.filter((notif) => notif.id !== id));
+    } catch (error) {
+      console.error("Error al eliminar notificación:", error);
+    }
   };
 
-  const handleMarkAllAsRead = () => {
-    notifications.forEach((notif) => {
-      if (!notif.read) {
-        NotificationController.marcarComoLeida(parseInt(notif.id));
+  const handleMarkAllAsRead = async () => {
+    try {
+      if (usuario?.id) {
+        await Notification.marcarTodasComoLeidas(usuario.id);
+        setNotifications(notifications.map((notif) => ({ ...notif, read: true })));
       }
-    });
-    setNotifications(notifications.map((notif) => ({ ...notif, read: true })));
+    } catch (error) {
+      console.error("Error al marcar todas como leídas:", error);
+    }
   };
 
   const unreadCount = notifications.filter((n) => !n.read).length;

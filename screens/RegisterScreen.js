@@ -13,18 +13,21 @@ import {
   ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { UserController } from "../controllers/UserController";
+import { useAuth } from "../hooks/useAuth";
 
 export default function RegisterScreen() {
-  const [nombre, setNombre] = useState("");
-  const [correo, setCorreo] = useState("");
-  const [contraseña, setContraseña] = useState("");
-  const [confirmar, setConfirmar] = useState("");
-  const [telefono, setTelefono] = useState("");
+  const [nombre, setNombre] = useState("Juan Pérez");
+  const [correo, setCorreo] = useState("juan.perez@example.com");
+  const [contraseña, setContraseña] = useState("password123");
+  const [confirmar, setConfirmar] = useState("password123");
+  const [telefono, setTelefono] = useState("1234567890");
   const [mensaje, setMensaje] = useState("");
   const [cargando, setCargando] = useState(false);
   const navigation = useNavigation();
+  const { login } = useAuth();
 
-  const enviarDatos = () => {
+  const enviarDatos = async () => {
     if (
       nombre.trim() === "" ||
       correo.trim() === "" ||
@@ -65,10 +68,24 @@ export default function RegisterScreen() {
     setCargando(true);
     setMensaje("Registrando usuario...");
 
-    setTimeout(() => {
+    // Llamar al controlador para registrar
+    const resultado = await UserController.registrarUsuario(
+      nombre,
+      correo,
+      telefono,
+      contraseña
+    );
+
+    if (resultado.success) {
       setCargando(false);
-      Alert.alert("✅ Registro Exitoso", `Bienvenido ${nombre}!`);
+      Alert.alert("✅ Registro Exitoso", ¡Bienvenido ${nombre}!);
       setMensaje("Iniciando sesión...");
+
+      // Activar la sesión con useAuth
+      login(resultado.usuario);
+
+      // Guardar el userId antes del timeout
+      const usuarioId = resultado.usuario.id;
 
       setTimeout(() => {
         // Limpiar campos
@@ -79,10 +96,14 @@ export default function RegisterScreen() {
         setTelefono("");
         setMensaje("");
 
-        // Navegar al login sin mostrar splash
-        navigation.navigate("Login", { skipSplash: true });
+        // Navegar al MainTabs directamente (ya autenticado)
+        navigation.navigate("MainTabs", { userId: usuarioId });
       }, 1500);
-    }, 2000);
+    } else {
+      setCargando(false);
+      Alert.alert("Error", resultado.error);
+      setMensaje("Error al registrar");
+    }
   };
 
   return (

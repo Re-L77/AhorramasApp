@@ -12,17 +12,27 @@ import {
   Platform,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { UserController } from "../controllers/UserController";
+import { useAuth } from "../hooks/useAuth";
 
 export default function ForgotPasswordScreen() {
   const [step, setStep] = useState(1); // 1: Email/Phone, 2: Verification Code, 3: Reset Password
   const [email, setEmail] = useState("juan@example.com");
   const [verificationCode, setVerificationCode] = useState("");
-  const [newPassword, setNewPassword] = useState("password123");
-  const [confirmPassword, setConfirmPassword] = useState("password123");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigation = useNavigation();
+  const { login } = useAuth();
+
+  // Códigos de verificación estáticos
+  const VERIFICATION_CODES = {
+    "juan@example.com": "123456",
+    "maria@example.com": "654321",
+    "carlos@example.com": "789012",
+  };
 
   // Validar email
   const validateEmail = (text) => {
@@ -43,12 +53,26 @@ export default function ForgotPasswordScreen() {
     }
 
     setLoading(true);
-    // Simular envío de código
+
+    // Verificar que el usuario exista
+    const usuariosResult = await UserController.obtenerUsuarios();
+    const usuarioExiste = usuariosResult.success &&
+      usuariosResult.usuarios.some(u => u.correo === email);
+
+    if (!usuarioExiste) {
+      setLoading(false);
+      Alert.alert("Error", "No existe una cuenta con este correo electrónico");
+      return;
+    }
+
+    // Obtener el código de verificación para este correo
+    const codigo = VERIFICATION_CODES[email] || "000000";
+
     setTimeout(() => {
       setLoading(false);
       Alert.alert(
         "Código enviado",
-        `Se envió un código de verificación a ${email}\n\nCódigo de prueba: 123456`
+        Se envió un código de verificación a ${email}\n\nCódigo de prueba: ${codigo}
       );
       setStep(2);
     }, 1500);
@@ -61,8 +85,10 @@ export default function ForgotPasswordScreen() {
       return;
     }
 
-    // Código de prueba: 123456
-    if (verificationCode !== "123456") {
+    // Código de verificación estático para cada correo
+    const codigoEsperado = VERIFICATION_CODES[email] || "000000";
+
+    if (verificationCode !== codigoEsperado) {
       Alert.alert("Error", "Código de verificación inválido");
       return;
     }
@@ -93,15 +119,18 @@ export default function ForgotPasswordScreen() {
     }
 
     setLoading(true);
-    // Simular cambio de contraseña
-    setTimeout(() => {
+
+    // Llamar al controlador para cambiar la contraseña
+    const resultado = await UserController.cambiarContraseñaPorCorreo(email, newPassword);
+
+    if (resultado.success) {
       setLoading(false);
       Alert.alert(
         "¡Éxito!",
         "Tu contraseña ha sido restablecida correctamente",
         [
           {
-            text: "Volver a Login",
+            text: "Ir al Login",
             onPress: () => {
               // Limpiar todos los datos del formulario
               setEmail("");
@@ -109,13 +138,17 @@ export default function ForgotPasswordScreen() {
               setNewPassword("");
               setConfirmPassword("");
               setStep(1);
+
               // Navegar al Login
-              navigation.navigate("Login");
+              navigation.navigate("Login", { skipSplash: true });
             },
           },
         ]
       );
-    }, 1500);
+    } else {
+      setLoading(false);
+      Alert.alert("Error", resultado.error);
+    }
   };
 
   return (
@@ -138,8 +171,8 @@ export default function ForgotPasswordScreen() {
             {step === 1
               ? "Ingresa tu correo para recuperar tu cuenta"
               : step === 2
-              ? "Verifica el código enviado a tu correo"
-              : "Establece una nueva contraseña"}
+                ? "Verifica el código enviado a tu correo"
+                : "Establece una nueva contraseña"}
           </Text>
         </View>
 
@@ -231,7 +264,7 @@ export default function ForgotPasswordScreen() {
                   style={styles.eyeButton}
                 >
                   <Text style={styles.eyeIcon}>
-                    {showPassword ? "👁️" : "👁️‍🗨️"}
+                    {showPassword ? "👁" : "👁‍🗨"}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -252,7 +285,7 @@ export default function ForgotPasswordScreen() {
                   style={styles.eyeButton}
                 >
                   <Text style={styles.eyeIcon}>
-                    {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
+                    {showConfirmPassword ? "👁" : "👁‍🗨"}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -270,8 +303,8 @@ export default function ForgotPasswordScreen() {
                   style={[
                     styles.requirementText,
                     newPassword === confirmPassword &&
-                      newPassword.length > 0 &&
-                      styles.requirementMet,
+                    newPassword.length > 0 &&
+                    styles.requirementMet,
                   ]}
                 >
                   ✓ Las contraseñas coinciden
@@ -288,8 +321,8 @@ export default function ForgotPasswordScreen() {
             step === 1
               ? handleSendCode
               : step === 2
-              ? handleVerifyCode
-              : handleResetPassword
+                ? handleVerifyCode
+                : handleResetPassword
           }
           disabled={loading}
         >
@@ -300,8 +333,8 @@ export default function ForgotPasswordScreen() {
               {step === 1
                 ? "Enviar Código"
                 : step === 2
-                ? "Verificar Código"
-                : "Establecer Nueva Contraseña"}
+                  ? "Verificar Código"
+                  : "Establecer Nueva Contraseña"}
             </Text>
           )}
         </TouchableOpacity>

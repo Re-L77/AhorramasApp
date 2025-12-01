@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,8 +10,14 @@ import {
   TextInput,
   Pressable,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from "../hooks/useAuth";
+import { Budget } from "../models/Budget";
+import { BudgetController } from "../controllers/BudgetController";
+import { Notification } from "../models/Notification";
+
 let WebIcons;
 if (Platform.OS === "web") {
   WebIcons = require("react-icons/io5");
@@ -20,22 +26,57 @@ if (Platform.OS === "web") {
 const screenWidth = Dimensions.get("window").width;
 
 export default function BudgetScreen() {
-  const [data, setData] = useState([
-    { id: "1", categoria: "Comida", usado: 300, limite: 500 },
-    { id: "2", categoria: "Transporte", usado: 120, limite: 300 },
-    { id: "3", categoria: "Hogar", usado: 400, limite: 600 },
-    { id: "4", categoria: "Servicios", usado: 250, limite: 400 },
-    { id: "5", categoria: "Educación", usado: 150, limite: 300 },
-    { id: "6", categoria: "Ahorro", usado: 200, limite: 500 },
-  ]);
-
+  const { usuario } = useAuth();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [nuevaCategoria, setNuevaCategoria] = useState("");
-  const [nuevoUsado, setNuevoUsado] = useState("");
   const [nuevoLimite, setNuevoLimite] = useState("");
   const [error, setError] = useState("");
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [presupuestoAEliminar, setPresupuestoAEliminar] = useState(null);
 
-  const agregarPresupuesto = () => {
+  useEffect(() => {
+    cargarPresupuestos();
+  }, [usuario]);
+
+  const cargarPresupuestos = async () => {
+    try {
+      setLoading(true);
+      if (!usuario?.id) {
+        console.log('Usuario no disponible, esperando...');
+        setLoading(false);
+        return;
+      }
+
+      const ahora = new Date();
+      const mes = ahora.getMonth() + 1;
+      const año = ahora.getFullYear();
+
+      const presupuestos = await Budget.obtenerPresupuestosUsuario(
+        usuario.id,
+        mes,
+        año
+      );
+
+      // Transformar datos para la pantalla
+      const datosTransformados = presupuestos.map((p) => ({
+        id: p.id?.toString() || Date.now().toString(),
+        categoria: p.categoria,
+        usado: p.montoActual || 0,
+        limite: p.montoLimite,
+      }));
+
+      setData(datosTransformados);
+    } catch (err) {
+      console.error("Error al cargar presupuestos:", err);
+      setError("Error al cargar presupuestos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const agregarPresupuesto = async () => {
     if (!nuevaCategoria.trim()) {
       setError("Por favor, ingresa una categoría.");
       return;
@@ -45,33 +86,91 @@ export default function BudgetScreen() {
       return;
     }
 
-    const nuevo = {
-      id: Date.now().toString(),
-      categoria: nuevaCategoria,
-      usado: parseFloat(nuevoUsado) || 0,
-      limite: parseFloat(nuevoLimite),
-    };
-    setData([...data, nuevo]);
-    setModalVisible(false);
-    setNuevaCategoria("");
-    setNuevoUsado("");
-    setNuevoLimite("");
-    setError("");
+    try {
+      if (!usuario?.id) {
+        setError("Usuario no autenticado. Por favor recarga la pantalla.");
+        return;
+      }
+
+      // Usar BudgetController en lugar de Budget directamente
+      const resultado = await BudgetController.crearPresupuesto(
+        usuario.id,
+        nuevaCategoria.trim(),
+        parseFloat(nuevoLimite)
+      );
+
+      if (!resultado.success) {
+        setError(resultado.error || "Error al crear presupuesto");
+        return;
+      }
+
+      // Recargar presupuestos
+      await cargarPresupuestos();
+
+      // Limpiar modal
+      setModalVisible(false);
+      setNuevaCategoria("");
+      setNuevoLimite("");
+      setError("");
+    } catch (err) {
+      console.error("Error al crear presupuesto:", err);
+      setError(err.message || "Error al crear presupuesto");
+    }
+  };
+
+  const confirmarEliminacion = async () => {
+    try {
+      if (!presupuestoAEliminar?.id) {
+        setError("Error: No se pudo identificar el presupuesto a eliminar");
+        return;
+      }
+
+      const resultado = await BudgetController.eliminarPresupuesto(
+        parseInt(presupuestoAEliminar.id)
+      );
+
+      if (!resultado.success) {
+        setError(resultado.error || "Error al eliminar presupuesto");
+        return;
+      }
+
+      // Crear notificación de eliminación
+      if (usuario?.id) {
+        await Notification.crearNotificacion(
+          usuario.id,
+          '🗑️ Presupuesto eliminado',
+          `Se eliminó el presupuesto de ${presupuestoAEliminar.categoria}`,
+          'info',
+          new Date().toISOString()
+        );
+      }
+
+      // Recargar presupuestos
+      await cargarPresupuestos();
+
+      // Cerrar modal
+      setDeleteModalVisible(false);
+      setPresupuestoAEliminar(null);
+    } catch (err) {
+      console.error("Error al eliminar presupuesto:", err);
+      setError(err.message || "Error al eliminar presupuesto");
+    }
   };
 
   // Calcular totales
   const totalUsado = data.reduce((sum, item) => sum + item.usado, 0);
   const totalLimite = data.reduce((sum, item) => sum + item.limite, 0);
-  const porcentajeUsado = (totalUsado / totalLimite) * 100;
+  const porcentajeUsado = totalLimite > 0 ? (totalUsado / totalLimite) * 100 : 0;
 
   // Colores para las categorías
   const colors = {
-    Comida: "#F97316",
+    Alimentación: "#F97316",
     Transporte: "#06B6D4",
-    Hogar: "#8B5CF6",
-    Servicios: "#EC4899",
+    Servicios: "#8B5CF6",
+    Entretenimiento: "#EC4899",
     Educación: "#10B981",
     Ahorro: "#6366F1",
+    Hogar: "#8B5CF6",
   };
 
   const getColorForCategoria = (categoria) => {
@@ -108,173 +207,213 @@ export default function BudgetScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={data}
-        keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <>
-            {/* Header Card */}
-            <View style={styles.headerCard}>
-              <Text style={styles.headerTitle}>💰 Presupuestos</Text>
+      {loading || !usuario?.id ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1089ff" />
+          <Text style={styles.loadingText}>
+            {!usuario?.id ? "Cargando usuario..." : "Cargando presupuestos..."}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={data}
+          keyExtractor={(item) => item.id}
+          ListHeaderComponent={
+            <>
+              {/* Header Card */}
+              <View style={styles.headerCard}>
+                <Text style={styles.headerTitle}>💰 Presupuestos</Text>
 
-              {/* Balance Highlight */}
-              <View style={styles.balanceContainer}>
-                <Text style={styles.balanceLabel}>Total Disponible</Text>
-                <Text style={styles.balanceAmount}>
-                  ${(totalLimite - totalUsado).toFixed(2)}
-                </Text>
+                {/* Balance Highlight */}
+                <View style={styles.balanceContainer}>
+                  <Text style={styles.balanceLabel}>Total Disponible</Text>
+                  <Text style={styles.balanceAmount}>
+                    ${(totalLimite - totalUsado).toFixed(2)}
+                  </Text>
+                </View>
+
+                {/* Stats */}
+                <View style={styles.statsRow}>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Usado</Text>
+                    <Text style={[styles.statAmount, { color: "#1089ff" }]}>
+                      ${totalUsado.toFixed(2)}
+                    </Text>
+                  </View>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Total</Text>
+                    <Text style={[styles.statAmount, { color: "#6B7280" }]}>
+                      ${totalLimite.toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Progreso General */}
+                <View style={styles.progressGeneralContainer}>
+                  <View style={styles.progressGeneralLabel}>
+                    <Text style={styles.progressLabel}>Progreso General</Text>
+                    <Text style={styles.progressPercent}>
+                      {porcentajeUsado.toFixed(0)}%
+                    </Text>
+                  </View>
+                  <View style={styles.progressBarContainer}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        { width: `${Math.min(porcentajeUsado, 100)}%` },
+                      ]}
+                    />
+                  </View>
+                </View>
               </View>
 
-              {/* Stats */}
-              <View style={styles.statsRow}>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Usado</Text>
-                  <Text style={[styles.statAmount, { color: "#1089ff" }]}>
-                    ${totalUsado.toFixed(2)}
-                  </Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Total</Text>
-                  <Text style={[styles.statAmount, { color: "#6B7280" }]}>
-                    ${totalLimite.toFixed(2)}
-                  </Text>
-                </View>
-              </View>
+              {/* Gráfico de Donitas */}
+              {data.length > 0 && (
+                <View style={styles.chartContainer}>
+                  <View style={styles.chartHeaderRow}>
+                    <Text style={styles.chartTitle}>🍰 Distribución de Gastos</Text>
+                    <Text style={styles.chartSubtitle}>
+                      proporción por categoría
+                    </Text>
+                  </View>
+                  <View style={styles.donutChartWrapper}>
+                    <View style={styles.donutContainer}>
+                      {data.map((item, index) => {
+                        const totalGastos = data.reduce(
+                          (sum, d) => sum + d.usado,
+                          0
+                        );
+                        const porcentaje =
+                          totalGastos > 0
+                            ? (item.usado / totalGastos) * 100
+                            : 0;
+                        const itemColor = getColorForCategoria(item.categoria);
 
-              {/* Progreso General */}
-              <View style={styles.progressGeneralContainer}>
-                <View style={styles.progressGeneralLabel}>
-                  <Text style={styles.progressLabel}>Progreso General</Text>
-                  <Text style={styles.progressPercent}>
-                    {porcentajeUsado.toFixed(0)}%
-                  </Text>
+                        return (
+                          <View
+                            key={item.id}
+                            style={[
+                              styles.donutSegment,
+                              {
+                                backgroundColor: itemColor,
+                                width: `${porcentaje}%`,
+                              },
+                            ]}
+                          />
+                        );
+                      })}
+                    </View>
+                    <View style={styles.legendContainer}>
+                      {data.map((item, index) => {
+                        const totalGastos = data.reduce(
+                          (sum, d) => sum + d.usado,
+                          0
+                        );
+                        const porcentaje =
+                          totalGastos > 0
+                            ? (item.usado / totalGastos) * 100
+                            : 0;
+                        const itemColor = getColorForCategoria(item.categoria);
+
+                        return (
+                          <View key={index} style={styles.legendItem}>
+                            <View
+                              style={[
+                                styles.legendDot,
+                                { backgroundColor: itemColor },
+                              ]}
+                            />
+                            <Text style={styles.legendText}>
+                              {item.categoria}: {porcentaje.toFixed(1)}%
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
                 </View>
-                <View style={styles.progressBarContainer}>
+              )}
+            </>
+          }
+          renderItem={({ item }) => {
+            const progreso = (item.usado / item.limite) * 100;
+            const isOverBudget = progreso > 100;
+            const itemColor = getColorForCategoria(item.categoria);
+
+            return (
+              <View style={styles.budgetCard}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.cardCategoria}>{item.categoria}</Text>
+                  <View style={styles.cardHeaderRight}>
+                    <Text
+                      style={[
+                        styles.cardProgreso,
+                        isOverBudget && styles.cardProgresoOver,
+                        {
+                          borderColor: itemColor,
+                          backgroundColor: itemColor + "15",
+                        },
+                      ]}
+                    >
+                      {progreso.toFixed(0)}%
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setPresupuestoAEliminar(item);
+                        setDeleteModalVisible(true);
+                      }}
+                      style={styles.deleteButtonSmall}
+                    >
+                      <Text style={styles.deleteButtonSmallText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.cardMonto}>
+                  <Text style={[styles.cardMontoUsado, { color: itemColor }]}>
+                    ${item.usado}
+                  </Text>
+                  <Text style={styles.cardMontoSeparator}>/</Text>
+                  <Text style={styles.cardMontoLimite}>${item.limite}</Text>
+                </View>
+
+                <View style={styles.progressContainer}>
                   <View
                     style={[
-                      styles.progressBarFill,
-                      { width: `${porcentajeUsado}%` },
+                      styles.progressBar,
+                      {
+                        width: `${Math.min(progreso, 100)}%`,
+                        backgroundColor: isOverBudget ? "#DC2626" : itemColor,
+                      },
                     ]}
                   />
                 </View>
-              </View>
-            </View>
 
-            {/* Gráfico de Donitas */}
-            <View style={styles.chartContainer}>
-              <View style={styles.chartHeaderRow}>
-                <Text style={styles.chartTitle}>🍰 Distribución de Gastos</Text>
-                <Text style={styles.chartSubtitle}>
-                  proporción por categoría
+                {isOverBudget && (
+                  <Text style={styles.overBudgetText}>
+                    ⚠️ Excedido por ${(item.usado - item.limite).toFixed(2)}
+                  </Text>
+                )}
+              </View>
+            );
+          }}
+          ListEmptyComponent={
+            !loading && data.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  No tienes presupuestos registrados
+                </Text>
+                <Text style={styles.emptySubtext}>
+                  Presiona el botón "+" para crear uno
                 </Text>
               </View>
-              <View style={styles.donutChartWrapper}>
-                <View style={styles.donutContainer}>
-                  {data.map((item, index) => {
-                    const totalGastos = data.reduce(
-                      (sum, d) => sum + d.usado,
-                      0
-                    );
-                    const porcentaje = (item.usado / totalGastos) * 100;
-                    const itemColor = getColorForCategoria(item.categoria);
-
-                    return (
-                      <View
-                        key={item.id}
-                        style={[
-                          styles.donutSegment,
-                          {
-                            backgroundColor: itemColor,
-                            width: `${porcentaje}%`,
-                          },
-                        ]}
-                      />
-                    );
-                  })}
-                </View>
-                <View style={styles.legendContainer}>
-                  {data.map((item, index) => {
-                    const totalGastos = data.reduce(
-                      (sum, d) => sum + d.usado,
-                      0
-                    );
-                    const porcentaje = (item.usado / totalGastos) * 100;
-                    const itemColor = getColorForCategoria(item.categoria);
-
-                    return (
-                      <View key={index} style={styles.legendItem}>
-                        <View
-                          style={[
-                            styles.legendDot,
-                            { backgroundColor: itemColor },
-                          ]}
-                        />
-                        <Text style={styles.legendText}>
-                          {item.categoria}: {porcentaje.toFixed(1)}%
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            </View>
-          </>
-        }
-        renderItem={({ item }) => {
-          const progreso = (item.usado / item.limite) * 100;
-          const isOverBudget = progreso > 100;
-          const itemColor = getColorForCategoria(item.categoria);
-
-          return (
-            <View style={styles.budgetCard}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardCategoria}>{item.categoria}</Text>
-                <Text
-                  style={[
-                    styles.cardProgreso,
-                    isOverBudget && styles.cardProgresoOver,
-                    {
-                      borderColor: itemColor,
-                      backgroundColor: itemColor + "15",
-                    },
-                  ]}
-                >
-                  {progreso.toFixed(0)}%
-                </Text>
-              </View>
-
-              <View style={styles.cardMonto}>
-                <Text style={[styles.cardMontoUsado, { color: itemColor }]}>
-                  ${item.usado}
-                </Text>
-                <Text style={styles.cardMontoSeparator}>/</Text>
-                <Text style={styles.cardMontoLimite}>${item.limite}</Text>
-              </View>
-
-              <View style={styles.progressContainer}>
-                <View
-                  style={[
-                    styles.progressBar,
-                    {
-                      width: `${Math.min(progreso, 100)}%`,
-                      backgroundColor: isOverBudget ? "#DC2626" : itemColor,
-                    },
-                  ]}
-                />
-              </View>
-
-              {isOverBudget && (
-                <Text style={styles.overBudgetText}>
-                  ⚠️ Excedido por ${(item.usado - item.limite).toFixed(2)}
-                </Text>
-              )}
-            </View>
-          );
-        }}
-        ListFooterComponent={<View style={{ height: 120 }} />}
-        contentContainerStyle={styles.listContainer}
-        scrollEnabled={true}
-      />
+            ) : null
+          }
+          ListFooterComponent={<View style={{ height: 120 }} />}
+          contentContainerStyle={styles.listContainer}
+          scrollEnabled={true}
+        />
+      )}
 
       {/* Floating Action Button */}
       <TouchableOpacity
@@ -297,7 +436,12 @@ export default function BudgetScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Nuevo Presupuesto</Text>
               <TouchableOpacity
-                onPress={() => setModalVisible(false)}
+                onPress={() => {
+                  setModalVisible(false);
+                  setError("");
+                  setNuevaCategoria("");
+                  setNuevoLimite("");
+                }}
                 style={styles.closeButton}
               >
                 <Text style={styles.closeButtonText}>✕</Text>
@@ -308,7 +452,7 @@ export default function BudgetScreen() {
 
             <TextInput
               style={styles.input}
-              placeholder="Categoría"
+              placeholder="Categoría (ej: Alimentación)"
               placeholderTextColor="#D1D5DB"
               value={nuevaCategoria}
               onChangeText={(text) => {
@@ -319,21 +463,9 @@ export default function BudgetScreen() {
 
             <TextInput
               style={styles.input}
-              placeholder="Monto usado"
+              placeholder="Límite mensual ($)"
               placeholderTextColor="#D1D5DB"
-              keyboardType="numeric"
-              value={nuevoUsado}
-              onChangeText={(text) => {
-                setNuevoUsado(text);
-                setError("");
-              }}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Límite mensual"
-              placeholderTextColor="#D1D5DB"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               value={nuevoLimite}
               onChangeText={(text) => {
                 setNuevoLimite(text);
@@ -341,19 +473,73 @@ export default function BudgetScreen() {
               }}
             />
 
+            <Text style={styles.infoText}>
+              💡 El monto usado se calcula automáticamente desde tus transacciones
+            </Text>
+
             <View style={styles.modalButtons}>
               <Pressable
                 style={styles.cancelButton}
                 onPress={() => {
                   setModalVisible(false);
                   setError("");
+                  setNuevaCategoria("");
+                  setNuevoLimite("");
                 }}
               >
                 <Text style={styles.cancelButtonText}>Cancelar</Text>
               </Pressable>
 
-              <Pressable style={styles.saveButton} onPress={agregarPresupuesto}>
+              <Pressable
+                style={styles.saveButton}
+                onPress={agregarPresupuesto}
+              >
                 <Text style={styles.saveButtonText}>Guardar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de confirmación de eliminación */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={deleteModalVisible}
+        onRequestClose={() => setDeleteModalVisible(false)}
+      >
+        <View style={styles.deleteModalOverlay}>
+          <View style={styles.deleteModalContent}>
+            <Text style={styles.deleteModalTitle}>
+              ¿Eliminar presupuesto?
+            </Text>
+            <Text style={styles.deleteModalMessage}>
+              ¿Estás seguro de que deseas eliminar el presupuesto de{" "}
+              <Text style={{ fontWeight: "700" }}>
+                {presupuestoAEliminar?.categoria}
+              </Text>
+              ?
+            </Text>
+            <Text style={styles.deleteModalWarning}>
+              Esta acción no se puede deshacer.
+            </Text>
+
+            <View style={styles.deleteModalButtons}>
+              <Pressable
+                style={styles.deleteModalCancel}
+                onPress={() => {
+                  setDeleteModalVisible(false);
+                  setPresupuestoAEliminar(null);
+                }}
+              >
+                <Text style={styles.deleteModalCancelText}>Cancelar</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.deleteModalConfirm}
+                onPress={confirmarEliminacion}
+              >
+                <Text style={styles.deleteModalConfirmText}>Eliminar</Text>
               </Pressable>
             </View>
           </View>
@@ -367,6 +553,35 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F9FAFB",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: "#6B7280",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#6B7280",
+    textAlign: "center",
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    marginTop: 8,
+    textAlign: "center",
   },
   listContainer: {
     paddingHorizontal: 12,
@@ -491,6 +706,24 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#374151",
   },
+  cardHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  deleteButtonSmall: {
+    backgroundColor: "#FEE2E2",
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteButtonSmallText: {
+    fontSize: 14,
+    color: "#DC2626",
+    fontWeight: "700",
+  },
   cardProgreso: {
     fontSize: 11,
     fontWeight: "700",
@@ -571,87 +804,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#9CA3AF",
   },
-  chartWrapper: {
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-    borderRadius: 14,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-  },
-  chartWrapperCustom: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    gap: 14,
-  },
-  chartWrapperPie: {
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F9FAFB",
-    borderRadius: 14,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-  },
-  chartContentWrapper: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-  },
-  chartGrid: {
-    gap: 12,
-  },
-  chartGridItem: {
-    gap: 8,
-  },
-  chartGridHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  chartGridLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#1F2937",
-  },
-  chartGridAmount: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  chartGridBarContainer: {
-    height: 20,
-    backgroundColor: "#E5E7EB",
-    borderRadius: 6,
-    overflow: "hidden",
-  },
-  chartGridBar: {
-    height: "100%",
-    borderRadius: 4,
-  },
-  pieChartWrapper: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 14,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#F3F4F6",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pieChartCenterWrapper: {
-    alignItems: "center",
-    justifyContent: "center",
-    width: screenWidth - 80,
-  },
-  pieChartStyle: {
-    marginVertical: 0,
-    marginHorizontal: 0,
-  },
   donutChartWrapper: {
     backgroundColor: "#F9FAFB",
     borderRadius: 14,
@@ -695,43 +847,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#5F6775",
   },
-  chartItemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  chartItemLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#1F2937",
-    minWidth: 90,
-  },
-  chartItemBarContainer: {
-    flex: 1,
-    height: 24,
-    backgroundColor: "#E5E7EB",
-    borderRadius: 8,
-    overflow: "hidden",
-  },
-  chartItemBar: {
-    height: "100%",
-    borderRadius: 6,
-  },
-  chartItemValue: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#1F2937",
-    minWidth: 50,
-    textAlign: "right",
-  },
-  chart: {
-    marginVertical: 8,
-    borderRadius: 12,
-  },
-  chartPie: {
-    borderRadius: 12,
-    marginVertical: 0,
-  },
   fab: {
     position: "absolute",
     right: 16,
@@ -762,6 +877,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
     paddingVertical: 20,
+    paddingBottom: 40,
   },
   modalHeader: {
     flexDirection: "row",
@@ -796,6 +912,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#1F2937",
     marginBottom: 12,
+  },
+  infoText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#6B7280",
+    marginBottom: 16,
+    paddingHorizontal: 4,
+    fontStyle: "italic",
   },
   errorText: {
     fontSize: 12,
@@ -835,6 +959,73 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 15,
     fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteModalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 20,
+    width: "90%",
+    maxWidth: 320,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  deleteModalTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1F2937",
+    marginBottom: 12,
+  },
+  deleteModalMessage: {
+    fontSize: 14,
+    color: "#6B7280",
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  deleteModalWarning: {
+    fontSize: 12,
+    color: "#DC2626",
+    marginBottom: 20,
+    fontWeight: "500",
+  },
+  deleteModalButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  deleteModalCancel: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: "#F3F4F6",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteModalCancelText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#6B7280",
+  },
+  deleteModalConfirm: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: "#DC2626",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteModalConfirmText: {
+    fontSize: 14,
+    fontWeight: "600",
     color: "#FFFFFF",
   },
 });

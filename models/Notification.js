@@ -168,7 +168,7 @@ export class Notification {
   static async crearNotificacion(userId, titulo, descripcion, tipo, fecha) {
     try {
       console.log('📝 Notification.crearNotificacion:', { userId, titulo, tipo, fecha });
-      
+
       if (Platform.OS === 'web') {
         return this._crearNotificacionWeb(userId, titulo, descripcion, tipo, fecha);
       }
@@ -179,7 +179,7 @@ export class Notification {
          VALUES (?, ?, ?, ?, ?, 0)`,
         [userId, titulo, descripcion, tipo, fecha]
       );
-      
+
       console.log('✅ Notificación insertada con ID:', resultado.lastInsertRowId);
       return resultado.lastInsertRowId;
     } catch (error) {

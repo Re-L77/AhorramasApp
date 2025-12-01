@@ -20,13 +20,41 @@ const getDB = () => {
 
 // Datos iniciales de prueba
 const INITIAL_TRANSACTIONS = [
-  { id: 1, userId: 1, tipo: 'ingreso', monto: 2000, descripcion: 'Salario', categoria: 'Ingresos', fecha: '2025-11-01' },
-  { id: 2, userId: 1, tipo: 'egreso', monto: 150, descripcion: 'Mercado', categoria: 'Alimentación', fecha: '2025-11-02' },
-  { id: 3, userId: 1, tipo: 'egreso', monto: 50, descripcion: 'Transporte', categoria: 'Transporte', fecha: '2025-11-03' },
-  { id: 4, userId: 2, tipo: 'ingreso', monto: 1800, descripcion: 'Salario', categoria: 'Ingresos', fecha: '2025-11-01' },
-  { id: 5, userId: 2, tipo: 'egreso', monto: 100, descripcion: 'Cine', categoria: 'Entretenimiento', fecha: '2025-11-02' },
-  { id: 6, userId: 3, tipo: 'ingreso', monto: 2500, descripcion: 'Freelance', categoria: 'Ingresos', fecha: '2025-11-01' },
-  { id: 7, userId: 3, tipo: 'egreso', monto: 80, descripcion: 'Gasolina', categoria: 'Transporte', fecha: '2025-11-03' }
+  // Usuario 1 - Ingresos
+  { id: 1, userId: 1, tipo: 'ingreso', monto: 3000, descripcion: 'Salario mensual', categoria: 'Ingresos', fecha: '2025-11-01' },
+  { id: 2, userId: 1, tipo: 'ingreso', monto: 500, descripcion: 'Bonificación', categoria: 'Ingresos', fecha: '2025-11-05' },
+  { id: 3, userId: 1, tipo: 'ingreso', monto: 200, descripcion: 'Freelance trabajo', categoria: 'Ingresos', fecha: '2025-11-10' },
+  
+  // Usuario 1 - Egresos Alimentación
+  { id: 4, userId: 1, tipo: 'egreso', monto: 150, descripcion: 'Supermercado', categoria: 'Alimentación', fecha: '2025-11-02' },
+  { id: 5, userId: 1, tipo: 'egreso', monto: 80, descripcion: 'Restaurante', categoria: 'Alimentación', fecha: '2025-11-06' },
+  { id: 6, userId: 1, tipo: 'egreso', monto: 120, descripcion: 'Compras verdulería', categoria: 'Alimentación', fecha: '2025-11-12' },
+  
+  // Usuario 1 - Egresos Transporte
+  { id: 7, userId: 1, tipo: 'egreso', monto: 50, descripcion: 'Gasolina', categoria: 'Transporte', fecha: '2025-11-03' },
+  { id: 8, userId: 1, tipo: 'egreso', monto: 30, descripcion: 'Uber', categoria: 'Transporte', fecha: '2025-11-08' },
+  { id: 9, userId: 1, tipo: 'egreso', monto: 45, descripcion: 'Mantenimiento auto', categoria: 'Transporte', fecha: '2025-11-15' },
+  
+  // Usuario 1 - Egresos Servicios
+  { id: 10, userId: 1, tipo: 'egreso', monto: 200, descripcion: 'Internet y teléfono', categoria: 'Servicios', fecha: '2025-11-01' },
+  { id: 11, userId: 1, tipo: 'egreso', monto: 150, descripcion: 'Electricidad', categoria: 'Servicios', fecha: '2025-11-04' },
+  { id: 12, userId: 1, tipo: 'egreso', monto: 100, descripcion: 'Agua y Gas', categoria: 'Servicios', fecha: '2025-11-07' },
+  
+  // Usuario 1 - Egresos Entretenimiento
+  { id: 13, userId: 1, tipo: 'egreso', monto: 70, descripcion: 'Cine', categoria: 'Entretenimiento', fecha: '2025-11-09' },
+  { id: 14, userId: 1, tipo: 'egreso', monto: 50, descripcion: 'Suscripción streaming', categoria: 'Entretenimiento', fecha: '2025-11-11' },
+  
+  // Usuario 1 - Egresos Educación
+  { id: 15, userId: 1, tipo: 'egreso', monto: 300, descripcion: 'Curso online', categoria: 'Educación', fecha: '2025-11-13' },
+  
+  // Usuario 1 - Ahorro
+  { id: 16, userId: 1, tipo: 'egreso', monto: 500, descripcion: 'Ahorro mensual', categoria: 'Ahorro', fecha: '2025-11-14' },
+  
+  // Otros usuarios
+  { id: 17, userId: 2, tipo: 'ingreso', monto: 1800, descripcion: 'Salario', categoria: 'Ingresos', fecha: '2025-11-01' },
+  { id: 18, userId: 2, tipo: 'egreso', monto: 100, descripcion: 'Cine', categoria: 'Entretenimiento', fecha: '2025-11-02' },
+  { id: 19, userId: 3, tipo: 'ingreso', monto: 2500, descripcion: 'Freelance', categoria: 'Ingresos', fecha: '2025-11-01' },
+  { id: 20, userId: 3, tipo: 'egreso', monto: 80, descripcion: 'Gasolina', categoria: 'Transporte', fecha: '2025-11-03' }
 ];
 
 export class Transaction {

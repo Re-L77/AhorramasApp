@@ -20,10 +20,30 @@ const getDB = () => {
 
 // Datos iniciales de prueba
 const INITIAL_NOTIFICATIONS = [
-  { id: 1, userId: 1, titulo: 'Bienvenido', descripcion: 'Bienvenido a Ahorra+', tipo: 'info', fecha: '2025-11-01', leida: false },
-  { id: 2, userId: 1, titulo: 'Presupuesto cerca del límite', descripcion: 'Tu presupuesto de Alimentación está al 30%', tipo: 'alerta', fecha: '2025-11-02', leida: false },
-  { id: 3, userId: 2, titulo: 'Bienvenido', descripcion: 'Bienvenido a Ahorra+', tipo: 'info', fecha: '2025-11-01', leida: true },
-  { id: 4, userId: 3, titulo: 'Bienvenido', descripcion: 'Bienvenido a Ahorra+', tipo: 'info', fecha: '2025-11-01', leida: false }
+  // Usuario 1 - Notificaciones de ingresos
+  { id: 1, userId: 1, titulo: '✅ Ingreso registrado', contenido: 'Se registró un ingreso de $3000 (Salario mensual)', tipo: 'ingreso', fechaCreacion: '2025-11-01', leida: 1 },
+  { id: 2, userId: 1, titulo: '✅ Ingreso registrado', contenido: 'Se registró un ingreso de $500 (Bonificación)', tipo: 'ingreso', fechaCreacion: '2025-11-05', leida: 1 },
+  { id: 3, userId: 1, titulo: '✅ Ingreso registrado', contenido: 'Se registró un ingreso de $200 (Freelance trabajo)', tipo: 'ingreso', fechaCreacion: '2025-11-10', leida: 1 },
+  
+  // Usuario 1 - Notificaciones de gastos
+  { id: 4, userId: 1, titulo: '📊 Gasto registrado', contenido: 'Se registró un gasto de $150 (Alimentación)', tipo: 'gasto', fechaCreacion: '2025-11-02', leida: 1 },
+  { id: 5, userId: 1, titulo: '📊 Gasto registrado', contenido: 'Se registró un gasto de $200 (Servicios)', tipo: 'gasto', fechaCreacion: '2025-11-01', leida: 1 },
+  { id: 6, userId: 1, titulo: '📊 Gasto registrado', contenido: 'Se registró un gasto de $50 (Transporte)', tipo: 'gasto', fechaCreacion: '2025-11-03', leida: 1 },
+  
+  // Usuario 1 - Notificaciones de presupuesto
+  { id: 7, userId: 1, titulo: '⚠️ Presupuesto excedido', contenido: 'Has excedido el presupuesto de Alimentación', tipo: 'presupuesto', fechaCreacion: '2025-11-15', leida: 0 },
+  { id: 8, userId: 1, titulo: '⚠️ Advertencia de presupuesto', contenido: 'Tu presupuesto de Servicios está al 80%', tipo: 'presupuesto', fechaCreacion: '2025-11-07', leida: 1 },
+  
+  // Usuario 1 - Notificaciones de logros
+  { id: 9, userId: 1, titulo: '🎉 Meta de ahorro alcanzada', contenido: '¡Felicidades! Alcanzaste tu meta de ahorro mensual', tipo: 'ahorro', fechaCreacion: '2025-11-14', leida: 1 },
+  { id: 10, userId: 1, titulo: '🎉 Logro desbloqueado', contenido: 'Completaste 15 transacciones este mes', tipo: 'ahorro', fechaCreacion: '2025-11-16', leida: 0 },
+  
+  // Usuario 1 - Notificación de bienvenida
+  { id: 11, userId: 1, titulo: '👋 Bienvenido a Ahorra+', contenido: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fechaCreacion: '2025-11-01', leida: 1 },
+  
+  // Otros usuarios
+  { id: 12, userId: 2, titulo: '👋 Bienvenido a Ahorra+', contenido: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fechaCreacion: '2025-11-01', leida: 1 },
+  { id: 13, userId: 3, titulo: '👋 Bienvenido a Ahorra+', contenido: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fechaCreacion: '2025-11-01', leida: 0 }
 ];
 
 export class Notification {

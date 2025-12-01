@@ -4,32 +4,30 @@ import {
     Text,
     TextInput,
     StyleSheet,
-    Platform,
-    StatusBar,
     TouchableOpacity,
     ScrollView,
+    Alert,
+    Keyboard,
+    Modal,
+    ActivityIndicator,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-
-const COLORS = {
-    black: "#000000",
-    gray: "#D9D9D9",
-    white: "#FFFFFF",
-    blueLight: "#1089ff",
-    red: "#992020",
-    blueStrong: "#1089ff",
-};
+import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../hooks/useAuth";
+import { UserController } from "../controllers/UserController";
 
 export default function ProfileEditScreen({ route }) {
     const navigation = useNavigation();
+    const { usuario } = useAuth();
     const { userData } = route.params || {};
 
-    const [nombre, setNombre] = useState(userData?.nombre || "Alex Martínez");
-    const [correo, setCorreo] = useState(userData?.correo || "124056435@upq.edu.mx");
-    const [telefono, setTelefono] = useState(userData?.telefono || "+52 442 2317790");
+    const [nombre, setNombre] = useState(userData?.nombre || "");
+    const [correo, setCorreo] = useState(userData?.correo || "");
+    const [telefono, setTelefono] = useState(userData?.telefono || "");
     const [errorCorreo, setErrorCorreo] = useState("");
 
-    const [showPasswordForm, setShowPasswordForm] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [currPass, setCurrPass] = useState("");
     const [newPass, setNewPass] = useState("");
     const [confirmPass, setConfirmPass] = useState("");
@@ -41,24 +39,60 @@ export default function ProfileEditScreen({ route }) {
     const [pwError, setPwError] = useState("");
     const [pwOk, setPwOk] = useState("");
 
+    const [loading, setLoading] = useState(false);
+
+    // Detectar cambios en los campos
+    const hasChanges =
+        nombre !== (userData?.nombre || "") ||
+        correo !== (userData?.correo || "") ||
+        telefono !== (userData?.telefono || "");
+
     const validarCorreo = (email) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
     };
 
-    const handleGuardar = () => {
+    const handleGuardar = async () => {
+        Keyboard.dismiss();
+
+        if (!nombre.trim()) {
+            setErrorCorreo("Por favor, ingrese su nombre.");
+            return;
+        }
         if (!validarCorreo(correo)) {
             setErrorCorreo("Por favor, ingrese un correo electrónico válido.");
             return;
         }
         setErrorCorreo("");
 
-        navigation.navigate("ProfileView", {
-            updatedData: { nombre, correo, telefono },
-        });
+        // Guardar en BD
+        setLoading(true);
+        const resultado = await UserController.actualizarPerfil(
+            usuario.id,
+            nombre,
+            correo,
+            telefono
+        );
+        setLoading(false);
+
+        if (resultado.success) {
+            Alert.alert("Éxito", "Perfil actualizado correctamente.", [
+                {
+                    text: "OK",
+                    onPress: () => {
+                        navigation.navigate("ProfileView", {
+                            updatedData: { nombre, correo, telefono },
+                        });
+                    },
+                },
+            ]);
+        } else {
+            Alert.alert("Error", resultado.error || "No se pudo actualizar el perfil");
+        }
     };
 
-    const handleCambiarContrasena = () => {
+    const handleCambiarContrasena = async () => {
+        Keyboard.dismiss();
         setPwError("");
         setPwOk("");
 
@@ -75,341 +109,588 @@ export default function ProfileEditScreen({ route }) {
             return;
         }
 
-        setPwOk("Contraseña actualizada correctamente.");
-        setCurrPass("");
-        setNewPass("");
-        setConfirmPass("");
-        setShowCurr(false);
-        setShowNew(false);
-        setShowConfirm(false);
+        // Cambiar contraseña en BD
+        setLoading(true);
+        const resultado = await UserController.cambiarContraseña(
+            usuario.id,
+            currPass,
+            newPass,
+            confirmPass
+        );
+        setLoading(false);
+
+        if (resultado.success) {
+            setPwOk("Contraseña actualizada correctamente.");
+            setCurrPass("");
+            setNewPass("");
+            setConfirmPass("");
+            setShowCurr(false);
+            setShowNew(false);
+            setShowConfirm(false);
+
+            setTimeout(() => {
+                closePasswordModal();
+            }, 2000);
+        } else {
+            setPwError(resultado.error || "Error al cambiar la contraseña");
+        }
     };
 
     const handleCancelar = () => {
-        setErrorCorreo("");
-        setShowPasswordForm(false);
-        setPwError("");
-        setPwOk("");
         navigation.goBack();
     };
 
+    const closePasswordModal = () => {
+        setCurrPass("");
+        setNewPass("");
+        setConfirmPass("");
+        setPwError("");
+        setPwOk("");
+        setShowPasswordModal(false);
+    };
+
     return (
-        <View style={styles.safe}>
-            <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <>
+            <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
+                {/* Header */}
                 <View style={styles.header}>
-                    <TouchableOpacity
-                        onPress={handleCancelar}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                        <Text style={styles.backButton}>← Atrás</Text>
+                    <TouchableOpacity onPress={handleCancelar} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <Ionicons name="chevron-back" size={28} color="#1089ff" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>Editar Perfil</Text>
-                    <View style={{ width: 50 }} />
+                    <View style={{ width: 28 }} />
                 </View>
 
-                <View style={styles.content}>
-                    <View style={styles.avatarContainer}>
-                        <View style={styles.avatar} />
+                {/* Content */}
+                {loading ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#1089ff" />
                     </View>
+                ) : (
+                    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+                        <View style={styles.avatarSection}>
+                            <View style={styles.avatar}>
+                                <Ionicons name="person-circle" size={80} color="#1089ff" />
+                            </View>
+                        </View>
 
-                    <Text style={styles.fieldLabel}>Nombre</Text>
-                    <View style={styles.inputBox}>
-                        <TextInput
-                            value={nombre}
-                            onChangeText={setNombre}
-                            style={styles.inputText}
-                            placeholder="Ingrese su nombre"
-                            placeholderTextColor="#999"
-                        />
-                    </View>
+                        {/* Form Section */}
+                        <View style={styles.formSection}>
+                            <Text style={styles.sectionTitle}>Información Personal</Text>
 
-                    <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Correo electrónico</Text>
-                    <View style={styles.inputBox}>
-                        <TextInput
-                            value={correo}
-                            onChangeText={(text) => {
-                                setCorreo(text);
-                                setErrorCorreo("");
-                            }}
-                            style={styles.inputText}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                            placeholder="Ingrese su correo"
-                            placeholderTextColor="#999"
-                        />
-                    </View>
-                    {errorCorreo ? (
-                        <Text style={styles.errorText}>{errorCorreo}</Text>
-                    ) : null}
-
-                    <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Teléfono</Text>
-                    <View style={styles.inputBox}>
-                        <TextInput
-                            value={telefono}
-                            onChangeText={setTelefono}
-                            style={styles.inputText}
-                            keyboardType="phone-pad"
-                            placeholder="Ingrese su teléfono"
-                            placeholderTextColor="#999"
-                        />
-                    </View>
-
-                    <TouchableOpacity
-                        style={[styles.passwordButton, { backgroundColor: COLORS.red }]}
-                        onPress={() => setShowPasswordForm((v) => !v)}
-                    >
-                        <Text style={styles.passwordButtonText}>
-                            {showPasswordForm ? "Ocultar" : "Cambiar contraseña"}
-                        </Text>
-                    </TouchableOpacity>
-
-                    {showPasswordForm && (
-                        <View style={styles.pwForm}>
-                            <Text style={styles.pwLabel}>Contraseña actual</Text>
-                            <View style={[styles.inputBox, styles.inputWrapper]}>
-                                <TextInput
-                                    value={currPass}
-                                    onChangeText={setCurrPass}
-                                    secureTextEntry={!showCurr}
-                                    style={[styles.inputText, { paddingRight: 36 }]}
-                                    placeholder="Ingrese contraseña actual"
-                                    placeholderTextColor="#999"
-                                />
-                                <TouchableOpacity
-                                    onPress={() => setShowCurr((s) => !s)}
-                                    style={styles.eyeBtn}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                >
-                                    <Text style={styles.eyeTxt}>{showCurr ? "🙈" : "👁️"}</Text>
-                                </TouchableOpacity>
+                            {/* Nombre */}
+                            <View style={styles.fieldGroup}>
+                                <Text style={styles.fieldLabel}>Nombre Completo</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Ionicons name="person" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        value={nombre}
+                                        onChangeText={setNombre}
+                                        style={styles.input}
+                                        placeholder="Ingrese su nombre"
+                                        placeholderTextColor="#D1D5DB"
+                                    />
+                                </View>
                             </View>
 
-                            <Text style={styles.pwLabel}>Nueva contraseña</Text>
-                            <View style={[styles.inputBox, styles.inputWrapper]}>
-                                <TextInput
-                                    value={newPass}
-                                    onChangeText={setNewPass}
-                                    secureTextEntry={!showNew}
-                                    style={[styles.inputText, { paddingRight: 36 }]}
-                                    placeholder="Ingrese nueva contraseña"
-                                    placeholderTextColor="#999"
-                                />
-                                <TouchableOpacity
-                                    onPress={() => setShowNew((s) => !s)}
-                                    style={styles.eyeBtn}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                >
-                                    <Text style={styles.eyeTxt}>{showNew ? "🙈" : "👁️"}</Text>
-                                </TouchableOpacity>
+                            {/* Correo */}
+                            <View style={styles.fieldGroup}>
+                                <Text style={styles.fieldLabel}>Correo Electrónico</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Ionicons name="mail" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        value={correo}
+                                        onChangeText={(text) => {
+                                            setCorreo(text);
+                                            setErrorCorreo("");
+                                        }}
+                                        style={styles.input}
+                                        keyboardType="email-address"
+                                        autoCapitalize="none"
+                                        placeholder="correo@example.com"
+                                        placeholderTextColor="#D1D5DB"
+                                    />
+                                </View>
+                                {errorCorreo ? (
+                                    <View style={styles.errorBox}>
+                                        <Ionicons name="alert-circle" size={14} color="#DC2626" />
+                                        <Text style={styles.errorText}>{errorCorreo}</Text>
+                                    </View>
+                                ) : null}
                             </View>
 
-                            <Text style={styles.pwLabel}>Confirmar contraseña</Text>
-                            <View style={[styles.inputBox, styles.inputWrapper]}>
-                                <TextInput
-                                    value={confirmPass}
-                                    onChangeText={setConfirmPass}
-                                    secureTextEntry={!showConfirm}
-                                    style={[styles.inputText, { paddingRight: 36 }]}
-                                    placeholder="Confirme contraseña"
-                                    placeholderTextColor="#999"
-                                />
-                                <TouchableOpacity
-                                    onPress={() => setShowConfirm((s) => !s)}
-                                    style={styles.eyeBtn}
-                                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                >
-                                    <Text style={styles.eyeTxt}>
-                                        {showConfirm ? "🙈" : "👁️"}
-                                    </Text>
-                                </TouchableOpacity>
+                            {/* Teléfono */}
+                            <View style={styles.fieldGroup}>
+                                <Text style={styles.fieldLabel}>Teléfono</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Ionicons name="call" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        value={telefono}
+                                        onChangeText={setTelefono}
+                                        style={styles.input}
+                                        keyboardType="phone-pad"
+                                        placeholder="+52 442 2317790"
+                                        placeholderTextColor="#D1D5DB"
+                                    />
+                                </View>
+                            </View>
+                        </View>
+
+                        {/* Cambiar Contraseña */}
+                        <View style={styles.formSection}>
+                            <Text style={styles.sectionTitle}>Seguridad</Text>
+                            <TouchableOpacity
+                                style={styles.securityButton}
+                                onPress={() => setShowPasswordModal(true)}
+                            >
+                                <View style={styles.securityButtonContent}>
+                                    <View style={[styles.iconBox, { backgroundColor: "#D1FAE5" }]}>
+                                        <Ionicons name="lock-closed" size={20} color="#059669" />
+                                    </View>
+                                    <View style={styles.securityButtonText}>
+                                        <Text style={styles.securityButtonTitle}>Cambiar Contraseña</Text>
+                                        <Text style={styles.securityButtonDesc}>Actualiza tu contraseña</Text>
+                                    </View>
+                                </View>
+                                <Ionicons name="chevron-forward" size={20} color="#D1D5DB" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Action Buttons */}
+                        <View style={styles.actionButtons}>
+                            <TouchableOpacity
+                                style={[styles.actionBtn, styles.cancelBtn]}
+                                onPress={handleCancelar}
+                            >
+                                <Text style={styles.cancelText}>Cancelar</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.actionBtn, styles.saveBtn, !hasChanges && styles.disabledBtn]}
+                                onPress={handleGuardar}
+                                disabled={!hasChanges}
+                            >
+                                <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                                <Text style={styles.saveText}>Guardar Cambios</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
+                )}
+            </SafeAreaView>
+
+            {/* Modal Cambiar Contraseña */}
+            <Modal
+                visible={showPasswordModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={closePasswordModal}
+            >
+                <SafeAreaView style={styles.modalContainer}>
+                    {/* Modal Header */}
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity onPress={closePasswordModal} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                            <Ionicons name="close" size={28} color="#1089ff" />
+                        </TouchableOpacity>
+                        <Text style={styles.modalTitle}>Cambiar Contraseña</Text>
+                        <View style={{ width: 28 }} />
+                    </View>
+
+                    {/* Modal Content */}
+                    <ScrollView contentContainerStyle={styles.modalContent}>
+                        <View style={styles.modalFormSection}>
+                            {/* Contraseña Actual */}
+                            <View style={styles.fieldGroup}>
+                                <Text style={styles.fieldLabel}>Contraseña Actual</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Ionicons name="lock-closed" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        value={currPass}
+                                        onChangeText={setCurrPass}
+                                        secureTextEntry={!showCurr}
+                                        style={[styles.input, { paddingRight: 40 }]}
+                                        placeholder="Contraseña actual"
+                                        placeholderTextColor="#D1D5DB"
+                                    />
+                                    <TouchableOpacity
+                                        onPress={() => setShowCurr((s) => !s)}
+                                        style={styles.eyeBtn}
+                                    >
+                                        <Ionicons name={showCurr ? "eye-off" : "eye"} size={18} color="#9CA3AF" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            {/* Nueva Contraseña */}
+                            <View style={styles.fieldGroup}>
+                                <Text style={styles.fieldLabel}>Nueva Contraseña</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Ionicons name="lock-closed" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        value={newPass}
+                                        onChangeText={setNewPass}
+                                        secureTextEntry={!showNew}
+                                        style={[styles.input, { paddingRight: 40 }]}
+                                        placeholder="Nueva contraseña"
+                                        placeholderTextColor="#D1D5DB"
+                                    />
+                                    <TouchableOpacity
+                                        onPress={() => setShowNew((s) => !s)}
+                                        style={styles.eyeBtn}
+                                    >
+                                        <Ionicons name={showNew ? "eye-off" : "eye"} size={18} color="#9CA3AF" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            {/* Confirmar Contraseña */}
+                            <View style={styles.fieldGroup}>
+                                <Text style={styles.fieldLabel}>Confirmar Contraseña</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Ionicons name="lock-closed" size={18} color="#9CA3AF" style={styles.inputIcon} />
+                                    <TextInput
+                                        value={confirmPass}
+                                        onChangeText={setConfirmPass}
+                                        secureTextEntry={!showConfirm}
+                                        style={[styles.input, { paddingRight: 40 }]}
+                                        placeholder="Confirmar contraseña"
+                                        placeholderTextColor="#D1D5DB"
+                                    />
+                                    <TouchableOpacity
+                                        onPress={() => setShowConfirm((s) => !s)}
+                                        style={styles.eyeBtn}
+                                    >
+                                        <Ionicons name={showConfirm ? "eye-off" : "eye"} size={18} color="#9CA3AF" />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
 
                             {pwError ? (
-                                <Text style={styles.errorText}>{pwError}</Text>
+                                <View style={styles.errorBox}>
+                                    <Ionicons name="alert-circle" size={14} color="#DC2626" />
+                                    <Text style={styles.errorText}>{pwError}</Text>
+                                </View>
                             ) : null}
-                            {pwOk ? <Text style={styles.successText}>{pwOk}</Text> : null}
+                            {pwOk ? (
+                                <View style={styles.successBox}>
+                                    <Ionicons name="checkmark-circle" size={14} color="#059669" />
+                                    <Text style={styles.successText}>{pwOk}</Text>
+                                </View>
+                            ) : null}
 
-                            <TouchableOpacity
-                                style={styles.changePwBtn}
-                                onPress={handleCambiarContrasena}
-                            >
-                                <Text style={styles.changePwTxt}>Cambiar contraseña</Text>
-                            </TouchableOpacity>
+                            {/* Modal Actions */}
+                            <View style={styles.modalActions}>
+                                <TouchableOpacity
+                                    style={[styles.actionBtn, styles.cancelBtn]}
+                                    onPress={closePasswordModal}
+                                >
+                                    <Text style={styles.cancelText}>Cancelar</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.actionBtn, styles.saveBtn]}
+                                    onPress={handleCambiarContrasena}
+                                >
+                                    <Ionicons name="checkmark" size={20} color="#FFFFFF" />
+                                    <Text style={styles.saveText}>Cambiar</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    )}
-
-                    <View style={styles.row}>
-                        <TouchableOpacity
-                            style={[styles.actionBtn, styles.cancelBtn]}
-                            onPress={handleCancelar}
-                        >
-                            <Text style={styles.actionText}>Cancelar</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                            style={[styles.actionBtn, styles.saveBtn]}
-                            onPress={handleGuardar}
-                        >
-                            <Text style={[styles.actionText, { color: COLORS.white }]}>
-                                Guardar
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </ScrollView>
-        </View>
+                    </ScrollView>
+                </SafeAreaView>
+            </Modal>
+        </>
     );
 }
 
 const styles = StyleSheet.create({
-    safe: {
-        flex: 1,
-        backgroundColor: COLORS.white,
-        paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    },
     container: {
         flex: 1,
+        backgroundColor: "#F9FAFB",
+    },
+    safeArea: {
+        flex: 1,
+    },
+    loadingContainer: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
     },
     header: {
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingHorizontal: 20,
-        paddingVertical: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: "#FFFFFF",
         borderBottomWidth: 1,
-        borderBottomColor: "#E5E5E5",
-    },
-    backButton: {
-        fontSize: 16,
-        color: COLORS.blueLight,
-        fontWeight: "600",
+        borderBottomColor: "#F3F4F6",
     },
     headerTitle: {
-        fontSize: 18,
-        fontWeight: "700",
-        color: COLORS.black,
+        fontSize: 20,
+        fontWeight: "800",
+        color: "#1F2937",
     },
-    content: {
-        paddingHorizontal: 20,
-        paddingVertical: 24,
+    scrollContent: {
+        paddingHorizontal: 16,
+        paddingBottom: 40,
     },
-    avatarContainer: {
+    avatarSection: {
         alignItems: "center",
-        marginBottom: 24,
+        marginVertical: 24,
     },
     avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        backgroundColor: COLORS.black,
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: "#FFFFFF",
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 4,
+    },
+    formSection: {
+        backgroundColor: "#FFFFFF",
+        marginHorizontal: 0,
+        marginBottom: 16,
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    sectionHeader: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 16,
+    },
+    sectionTitle: {
+        fontSize: 14,
+        fontWeight: "700",
+        color: "#6B7280",
+        textTransform: "uppercase",
+        letterSpacing: 0.5,
+    },
+    toggleBtn: {
+        width: 36,
+        height: 36,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    fieldGroup: {
+        marginBottom: 18,
     },
     fieldLabel: {
         fontSize: 13,
-        color: COLORS.black,
-        fontWeight: "600",
-        alignSelf: "flex-start",
-        marginLeft: 4,
-        marginBottom: 6,
-    },
-    inputBox: {
-        backgroundColor: COLORS.gray,
-        borderRadius: 10,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        marginBottom: 8,
-    },
-    inputText: {
-        fontSize: 14,
-        color: COLORS.black,
-        fontWeight: "600",
-    },
-    passwordButton: {
-        alignSelf: "flex-start",
-        backgroundColor: COLORS.red,
-        paddingVertical: 12,
-        paddingHorizontal: 18,
-        borderRadius: 12,
-        marginTop: 18,
-        marginBottom: 8,
-    },
-    passwordButtonText: {
-        color: COLORS.white,
         fontWeight: "700",
-        fontSize: 14,
-    },
-    pwForm: {
-        width: "100%",
-        marginTop: 16,
-        marginBottom: 16,
-    },
-    pwLabel: {
-        fontSize: 13,
-        color: COLORS.black,
-        fontWeight: "600",
-        alignSelf: "flex-start",
-        marginLeft: 4,
-        marginTop: 10,
-        marginBottom: 6,
+        color: "#1F2937",
+        marginBottom: 8,
     },
     inputWrapper: {
-        position: "relative",
+        flexDirection: "row",
+        alignItems: "center",
+        borderWidth: 1.5,
+        borderColor: "#E5E7EB",
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        backgroundColor: "#F9FAFB",
+    },
+    inputIcon: {
+        marginRight: 8,
+    },
+    input: {
+        flex: 1,
+        height: 48,
+        fontSize: 14,
+        color: "#1F2937",
+        fontWeight: "500",
     },
     eyeBtn: {
-        position: "absolute",
-        right: 10,
-        top: 0,
-        bottom: 0,
+        padding: 8,
         justifyContent: "center",
+        alignItems: "center",
     },
-    eyeTxt: {
-        fontSize: 16,
+    errorBox: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#FEE2E2",
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginTop: 8,
+        gap: 8,
+    },
+    errorText: {
+        fontSize: 12,
+        color: "#DC2626",
+        fontWeight: "600",
+        flex: 1,
+    },
+    successBox: {
+        flexDirection: "row",
+        alignItems: "center",
+        backgroundColor: "#DCFCE7",
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginTop: 8,
+        gap: 8,
+    },
+    successText: {
+        fontSize: 12,
+        color: "#059669",
+        fontWeight: "600",
+        flex: 1,
+    },
+    pwForm: {
+        borderTopWidth: 1,
+        borderTopColor: "#F3F4F6",
+        paddingTop: 16,
     },
     changePwBtn: {
-        alignSelf: "flex-start",
-        backgroundColor: COLORS.blueStrong,
+        backgroundColor: "#1089ff",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
         paddingVertical: 12,
-        paddingHorizontal: 18,
         borderRadius: 12,
-        marginTop: 18,
+        marginTop: 16,
+        gap: 8,
+        shadowColor: "#1089ff",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 2,
     },
     changePwTxt: {
-        color: COLORS.white,
+        color: "#FFFFFF",
         fontWeight: "700",
         fontSize: 14,
     },
-    row: {
+    actionButtons: {
         flexDirection: "row",
         gap: 12,
-        marginTop: 20,
+        marginHorizontal: 0,
         marginBottom: 20,
     },
     actionBtn: {
         flex: 1,
-        paddingVertical: 12,
+        paddingVertical: 14,
+        borderRadius: 12,
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "row",
+        gap: 8,
+    },
+    cancelBtn: {
+        backgroundColor: "#F3F4F6",
+        borderWidth: 1,
+        borderColor: "#E5E7EB",
+    },
+    cancelText: {
+        fontWeight: "700",
+        color: "#6B7280",
+        fontSize: 15,
+    },
+    saveBtn: {
+        backgroundColor: "#1089ff",
+        shadowColor: "#1089ff",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 3,
+    },
+    saveText: {
+        fontWeight: "700",
+        color: "#FFFFFF",
+        fontSize: 15,
+    },
+    disabledBtn: {
+        opacity: 0.5,
+    },
+
+    // Security Button
+    securityButton: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingVertical: 14,
+        paddingHorizontal: 12,
+        borderWidth: 1.5,
+        borderColor: "#E5E7EB",
+        borderRadius: 12,
+        backgroundColor: "#F9FAFB",
+    },
+    securityButtonContent: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
+    iconBox: {
+        width: 44,
+        height: 44,
         borderRadius: 12,
         alignItems: "center",
         justifyContent: "center",
     },
-    cancelBtn: {
-        backgroundColor: "#EDEDED",
+    securityButtonText: {
+        flex: 1,
     },
-    saveBtn: {
-        backgroundColor: COLORS.blueStrong,
-    },
-    actionText: {
-        fontWeight: "700",
-        color: COLORS.black,
-    },
-    errorText: {
-        color: COLORS.red,
-        fontSize: 12,
-        marginTop: 4,
-        marginLeft: 4,
+    securityButtonTitle: {
+        fontSize: 15,
         fontWeight: "600",
+        color: "#1F2937",
+        marginBottom: 2,
     },
-    successText: {
-        color: "#2e7d32",
+    securityButtonDesc: {
         fontSize: 12,
-        marginTop: 6,
-        marginLeft: 4,
-        fontWeight: "700",
+        color: "#9CA3AF",
+    },
+
+    // Modal Styles
+    modalContainer: {
+        flex: 1,
+        backgroundColor: "#F9FAFB",
+    },
+    modalHeader: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: "#FFFFFF",
+        borderBottomWidth: 1,
+        borderBottomColor: "#F3F4F6",
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: "800",
+        color: "#1F2937",
+    },
+    modalContent: {
+        paddingHorizontal: 16,
+        paddingVertical: 20,
+        paddingBottom: 40,
+    },
+    modalFormSection: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 20,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    modalActions: {
+        flexDirection: "row",
+        gap: 12,
+        marginTop: 20,
     },
 });

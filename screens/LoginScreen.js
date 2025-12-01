@@ -15,17 +15,20 @@ import {
   useIsFocused,
   useRoute,
 } from "@react-navigation/native";
+import { UserController } from "../controllers/UserController";
+import { useAuth } from "../hooks/useAuth";
 
 export default function LoginScreen() {
   const [showSplash, setShowSplash] = useState(true);
   const [showFinalSplash, setShowFinalSplash] = useState(false);
-  const [correo, setCorreo] = useState("");
-  const [contraseña, setContraseña] = useState("");
+  const [correo, setCorreo] = useState("juan@example.com");
+  const [contraseña, setContraseña] = useState("password123");
   const [mensaje, setMensaje] = useState("");
   const navigation = useNavigation();
   const route = useRoute();
   const isFocused = useIsFocused();
   const isFirstLoad = useRef(true);
+  const { login } = useAuth();
 
   const fadeAnim = useState(new Animated.Value(0))[0];
   const scaleAnim = useState(new Animated.Value(0.8))[0];
@@ -61,7 +64,7 @@ export default function LoginScreen() {
     }
   }, [isFocused, route.params?.skipSplash]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!correo || !contraseña) {
       Alert.alert("Error", "Por favor completa todos los campos.");
       setMensaje("Faltan campos por llenar");
@@ -75,13 +78,44 @@ export default function LoginScreen() {
       return;
     }
 
-    setMensaje("Inicio de sesión exitoso");
-    setShowFinalSplash(true);
-    setTimeout(() => {
-      setShowFinalSplash(false);
-      // Navegar a MainTabs usando navigate (no reset)
-      navigation.navigate("MainTabs");
-    }, 2500);
+    setMensaje("Iniciando sesión...");
+
+    // Llamar al controlador para autenticar
+    const resultado = await UserController.autenticarUsuario(correo, contraseña);
+
+    if (resultado.success) {
+      setMensaje("Inicio de sesión exitoso");
+      // Activar la sesión con useAuth
+      login(resultado.usuario);
+
+      // Resetear animaciones para la splash final
+      fadeAnim.setValue(0);
+      scaleAnim.setValue(0.8);
+
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: false,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 1500,
+          easing: Easing.out(Easing.exp),
+          useNativeDriver: false,
+        }),
+      ]).start();
+
+      setShowFinalSplash(true);
+      setTimeout(() => {
+        setShowFinalSplash(false);
+        // Navegar a MainTabs con el userId
+        navigation.navigate("MainTabs", { userId: resultado.usuario.id });
+      }, 2500);
+    } else {
+      Alert.alert("Error", resultado.error);
+      setMensaje("Error al iniciar sesión");
+    }
   };
 
   if (showSplash) {

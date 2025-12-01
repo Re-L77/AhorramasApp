@@ -24,7 +24,7 @@ export class BudgetController {
   static async crearPresupuesto(userId, categoria, montoLimite) {
     try {
       console.log('🔵 BudgetController.crearPresupuesto iniciado:', { userId, categoria, montoLimite });
-      
+
       if (Platform.OS === 'web') {
         return this._crearPresupuestoWeb(userId, categoria, montoLimite);
       }

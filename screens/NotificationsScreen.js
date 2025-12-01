@@ -54,10 +54,14 @@ export default function NotificationsScreen() {
           title: notif.titulo || "Notificación",
           message: notif.descripcion || notif.contenido || "",
           timestamp: new Date(notif.fecha).toLocaleDateString('es-ES'),
+          fecha: new Date(notif.fecha), // Para ordenamiento
           read: notif.leida === 1,
           color: getColorByType(notif.tipo),
           icon: getIconByType(notif.tipo),
         }));
+
+        // Ordenar de más reciente a más antigua
+        notificacionesFormateadas.sort((a, b) => b.fecha - a.fecha);
 
         setNotifications(notificacionesFormateadas);
       } else {
@@ -73,10 +77,13 @@ export default function NotificationsScreen() {
 
   const getColorByType = (tipo) => {
     const colores = {
+      alerta: "#DC2626",
+      recordatorio: "#F97316",
+      logro: "#10B981",
+      info: "#1089ff",
       presupuesto: "#DC2626",
       ingreso: "#059669",
       gasto: "#1089ff",
-      recordatorio: "#F97316",
       ahorro: "#10B981",
     };
     return colores[tipo] || "#1089ff";
@@ -84,11 +91,14 @@ export default function NotificationsScreen() {
 
   const getIconByType = (tipo) => {
     const iconos = {
+      alerta: "⚠️",
+      recordatorio: "🎯",
+      logro: "🏆",
+      info: "📊",
       ingreso: "✅",
       gasto: "📊",
       presupuesto: "⚠️",
       ahorro: "🎉",
-      recordatorio: "👋",
     };
     return iconos[tipo] || "📬";
   };

@@ -20,39 +20,62 @@ const getDB = () => {
 
 // Datos iniciales de prueba
 const INITIAL_NOTIFICATIONS = [
-  // Usuario 1 - Notificaciones de ingresos
-  { id: 1, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $3000 (Salario mensual)', tipo: 'logro', fecha: '2025-11-01', leida: 1 },
-  { id: 2, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $500 (Bonificación)', tipo: 'logro', fecha: '2025-11-05', leida: 1 },
-  { id: 3, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $200 (Freelance trabajo)', tipo: 'logro', fecha: '2025-11-10', leida: 1 },
-  { id: 22, userId: 1, titulo: 'Ingreso registrado', descripcion: 'Se registró un ingreso de $150 (Reembolso)', tipo: 'logro', fecha: '2025-11-18', leida: 0 },
+  // Usuario 1 - Notificaciones de ingresos Noviembre
+  { id: 1, userId: 1, titulo: '✅ Ingreso registrado', descripcion: 'Se registró un ingreso de $4000 (Salario mensual)', tipo: 'logro', fecha: '2025-11-01', leida: 1 },
+  { id: 2, userId: 1, titulo: '✅ Ingreso registrado', descripcion: 'Se registró un ingreso de $600 (Bonificación extra)', tipo: 'logro', fecha: '2025-11-15', leida: 1 },
 
-  // Usuario 1 - Notificaciones de gastos
-  { id: 4, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $150 (Supermercado)', tipo: 'info', fecha: '2025-11-02', leida: 1 },
-  { id: 5, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $200 (Servicios)', tipo: 'info', fecha: '2025-11-01', leida: 1 },
-  { id: 6, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $50 (Gasolina)', tipo: 'info', fecha: '2025-11-03', leida: 1 },
-  { id: 23, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $80 (Restaurante)', tipo: 'info', fecha: '2025-11-17', leida: 0 },
-  { id: 24, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $120 (Medicinas)', tipo: 'info', fecha: '2025-11-19', leida: 0 },
-  { id: 25, userId: 1, titulo: 'Gasto registrado', descripcion: 'Se registró un gasto de $45 (Transporte)', tipo: 'info', fecha: '2025-11-20', leida: 1 },
+  // Usuario 1 - Notificaciones de gastos Noviembre (Alimentación)
+  { id: 3, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $250 (Supermercado)', tipo: 'info', fecha: '2025-11-02', leida: 1 },
+  { id: 4, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $120 (Restaurante almuerzo)', tipo: 'info', fecha: '2025-11-05', leida: 1 },
+  { id: 5, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $180 (Compra alimentos frescos)', tipo: 'info', fecha: '2025-11-10', leida: 1 },
+  { id: 6, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $90 (Cafe y snacks)', tipo: 'info', fecha: '2025-11-18', leida: 0 },
 
-  // Usuario 1 - Notificaciones de presupuesto
-  { id: 7, userId: 1, titulo: 'Presupuesto excedido', descripcion: 'Has excedido el presupuesto de Alimentación', tipo: 'alerta', fecha: '2025-11-15', leida: 0 },
-  { id: 8, userId: 1, titulo: 'Advertencia de presupuesto', descripcion: 'Tu presupuesto de Servicios está al 80%', tipo: 'alerta', fecha: '2025-11-07', leida: 1 },
-  { id: 26, userId: 1, titulo: 'Presupuesto disponible', descripcion: 'Tu presupuesto de Entretenimiento tiene $150 disponibles', tipo: 'info', fecha: '2025-11-16', leida: 1 },
+  // Usuario 1 - Notificaciones de gastos Noviembre (Transporte)
+  { id: 7, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $120 (Gasolina)', tipo: 'info', fecha: '2025-11-03', leida: 1 },
+  { id: 8, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $50 (Uber al trabajo)', tipo: 'info', fecha: '2025-11-06', leida: 1 },
+  { id: 9, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $80 (Mantenimiento auto)', tipo: 'info', fecha: '2025-11-12', leida: 1 },
 
-  // Usuario 1 - Notificaciones de logros
-  { id: 9, userId: 1, titulo: 'Meta de ahorro alcanzada', descripcion: '¡Felicidades! Alcanzaste tu meta de ahorro mensual', tipo: 'logro', fecha: '2025-11-14', leida: 1 },
-  { id: 10, userId: 1, titulo: 'Logro desbloqueado', descripcion: 'Completaste 15 transacciones este mes', tipo: 'logro', fecha: '2025-11-16', leida: 0 },
-  { id: 27, userId: 1, titulo: 'Racha de ahorro', descripcion: 'Llevas 5 días consecutivos ahorrando dinero', tipo: 'logro', fecha: '2025-11-21', leida: 0 },
-  { id: 28, userId: 1, titulo: 'Presupuesto balanceado', descripcion: 'Mantuviste el balance perfecto este mes', tipo: 'logro', fecha: '2025-11-11', leida: 1 },
+  // Usuario 1 - Notificaciones de gastos Noviembre (Servicios)
+  { id: 10, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $250 (Internet y telefonía)', tipo: 'info', fecha: '2025-11-01', leida: 1 },
+  { id: 11, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $180 (Electricidad)', tipo: 'info', fecha: '2025-11-04', leida: 1 },
+  { id: 12, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $90 (Agua y gas)', tipo: 'info', fecha: '2025-11-08', leida: 1 },
 
-  // Usuario 1 - Notificación de bienvenida y recordatorios
-  { id: 11, userId: 1, titulo: 'Bienvenido a Ahorra+', descripcion: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fecha: '2025-11-01', leida: 1 },
-  { id: 29, userId: 1, titulo: 'Recordatorio', descripcion: 'No olvides registrar tus gastos del día', tipo: 'recordatorio', fecha: '2025-11-22', leida: 1 },
-  { id: 30, userId: 1, titulo: 'Resumen mensual', descripcion: 'Tu resumen financiero de noviembre está listo', tipo: 'recordatorio', fecha: '2025-11-30', leida: 1 },
+  // Usuario 1 - Notificaciones de gastos Noviembre (Entretenimiento, Educación, Ahorro)
+  { id: 13, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $120 (Cine con amigos)', tipo: 'info', fecha: '2025-11-07', leida: 1 },
+  { id: 14, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $50 (Suscripción streaming)', tipo: 'info', fecha: '2025-11-11', leida: 1 },
+  { id: 15, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $400 (Curso online de programación)', tipo: 'info', fecha: '2025-11-09', leida: 1 },
+  { id: 16, userId: 1, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $500 (Ahorro para vacaciones)', tipo: 'logro', fecha: '2025-11-20', leida: 1 },
 
-  // Otros usuarios
-  { id: 12, userId: 2, titulo: 'Bienvenido a Ahorra+', descripcion: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fecha: '2025-11-01', leida: 1 },
-  { id: 13, userId: 3, titulo: 'Bienvenido a Ahorra+', descripcion: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fecha: '2025-11-01', leida: 0 }
+  // Usuario 1 - Alertas de presupuesto
+  { id: 17, userId: 1, titulo: '⚠️ Presupuesto al 87%', descripcion: 'Tu presupuesto de Servicios está al 87%', tipo: 'alerta', fecha: '2025-11-08', leida: 0 },
+  { id: 18, userId: 1, titulo: '⚠️ Presupuesto al 80%', descripcion: 'Tu presupuesto de Educación está al 80%', tipo: 'alerta', fecha: '2025-11-09', leida: 0 },
+
+  // Usuario 1 - Recordatorios y logros
+  { id: 19, userId: 1, titulo: '🎯 Bienvenido a Ahorra+', descripcion: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fecha: '2025-11-01', leida: 1 },
+  { id: 20, userId: 1, titulo: '🏆 Logro desbloqueado', descripcion: '¡Felicidades! Registraste más de 20 transacciones', tipo: 'logro', fecha: '2025-11-20', leida: 0 },
+
+  // Usuario 2 - Notificaciones de ingresos
+  { id: 21, userId: 2, titulo: '✅ Ingreso registrado', descripcion: 'Se registró un ingreso de $3500 (Salario mensual)', tipo: 'logro', fecha: '2025-11-01', leida: 1 },
+
+  // Usuario 2 - Notificaciones de gastos
+  { id: 22, userId: 2, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $280 (Supermercado semanal)', tipo: 'info', fecha: '2025-11-02', leida: 1 },
+  { id: 23, userId: 2, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $150 (Transporte público y Uber)', tipo: 'info', fecha: '2025-11-04', leida: 1 },
+  { id: 24, userId: 2, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $80 (Cine)', tipo: 'info', fecha: '2025-11-10', leida: 1 },
+  { id: 25, userId: 2, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $200 (Restaurante familiar)', tipo: 'info', fecha: '2025-11-14', leida: 0 },
+
+  // Usuario 2 - Recordatorio
+  { id: 26, userId: 2, titulo: '🎯 Bienvenido a Ahorra+', descripcion: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fecha: '2025-11-01', leida: 1 },
+
+  // Usuario 3 - Notificaciones de ingresos
+  { id: 27, userId: 3, titulo: '✅ Ingreso registrado', descripcion: 'Se registró un ingreso de $2800 (Salario mensual)', tipo: 'logro', fecha: '2025-11-01', leida: 1 },
+
+  // Usuario 3 - Notificaciones de gastos
+  { id: 28, userId: 3, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $220 (Compras alimentos)', tipo: 'info', fecha: '2025-11-03', leida: 1 },
+  { id: 29, userId: 3, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $200 (Gasolina y mantenimiento)', tipo: 'info', fecha: '2025-11-05', leida: 1 },
+  { id: 30, userId: 3, titulo: '📊 Gasto registrado', descripcion: 'Se registró un gasto de $150 (Restaurante)', tipo: 'info', fecha: '2025-11-12', leida: 0 },
+
+  // Usuario 3 - Recordatorio
+  { id: 31, userId: 3, titulo: '🎯 Bienvenido a Ahorra+', descripcion: 'Comienza a rastrear tus finanzas hoy', tipo: 'recordatorio', fecha: '2025-11-01', leida: 0 }
 ];
 
 export class Notification {

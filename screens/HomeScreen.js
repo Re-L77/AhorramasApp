@@ -119,16 +119,16 @@ export default function HomeScreen() {
   const cargarDatos = async () => {
     try {
       setCargando(true);
-      
+
       // Obtener transacciones del usuario
       const resultadoTransacciones = await TransactionController.obtenerTransacciones(userId);
-      
+
       // Obtener presupuestos del usuario
       const resultadoPresupuestos = await BudgetController.obtenerPresupuestos(userId);
 
       if (resultadoTransacciones.success && resultadoTransacciones.data) {
         const transacciones = resultadoTransacciones.data;
-        
+
         // Calcular totales
         let ingresos = 0;
         let gastos = 0;
@@ -145,7 +145,7 @@ export default function HomeScreen() {
         });
 
         const balance = ingresos - gastos;
-        
+
         setTotalIngresos(ingresos);
         setTotalGastos(gastos);
         setBalanceTotal(balance);

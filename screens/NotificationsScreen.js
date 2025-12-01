@@ -33,7 +33,7 @@ export default function NotificationsScreen() {
     try {
       setCargando(true);
       const resultado = await NotificationController.obtenerNotificaciones(userId);
-      
+
       if (resultado.success && resultado.notificaciones) {
         // Mapear notificaciones de BD a formato visual
         const notificacionesFormateadas = resultado.notificaciones.map((notif) => ({
@@ -45,7 +45,7 @@ export default function NotificationsScreen() {
           read: notif.leida === 1,
           color: getColorByType(notif.tipo),
         }));
-        
+
         setNotifications(notificacionesFormateadas);
       }
       setCargando(false);
@@ -119,70 +119,70 @@ export default function NotificationsScreen() {
                   )}
                 </View>
 
-              {/* Stats */}
-              <View style={styles.statsRow}>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>No leídas</Text>
-                  <Text style={[styles.statAmount, { color: "#DC2626" }]}>
-                    {unreadCount}
-                  </Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Total</Text>
-                  <Text style={[styles.statAmount, { color: "#1089ff" }]}>
-                    {notifications.length}
-                  </Text>
+                {/* Stats */}
+                <View style={styles.statsRow}>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>No leídas</Text>
+                    <Text style={[styles.statAmount, { color: "#DC2626" }]}>
+                      {unreadCount}
+                    </Text>
+                  </View>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statLabel}>Total</Text>
+                    <Text style={[styles.statAmount, { color: "#1089ff" }]}>
+                      {notifications.length}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </>
-        }
-        renderItem={({ item }) => (
-          <View
-            style={[
-              styles.notificationCard,
-              !item.read && styles.notificationCardUnread,
-            ]}
-          >
+            </>
+          }
+          renderItem={({ item }) => (
             <View
-              style={[styles.colorIndicator, { backgroundColor: item.color }]}
-            />
+              style={[
+                styles.notificationCard,
+                !item.read && styles.notificationCardUnread,
+              ]}
+            >
+              <View
+                style={[styles.colorIndicator, { backgroundColor: item.color }]}
+              />
 
-            <View style={styles.notificationContent}>
-              <Text style={styles.notificationTitle}>{item.title}</Text>
-              <Text style={styles.notificationMessage}>{item.message}</Text>
-              <Text style={styles.notificationTime}>{item.timestamp}</Text>
-            </View>
+              <View style={styles.notificationContent}>
+                <Text style={styles.notificationTitle}>{item.title}</Text>
+                <Text style={styles.notificationMessage}>{item.message}</Text>
+                <Text style={styles.notificationTime}>{item.timestamp}</Text>
+              </View>
 
-            <View style={styles.notificationActions}>
-              {!item.read && (
+              <View style={styles.notificationActions}>
+                {!item.read && (
+                  <Pressable
+                    onPress={() => handleMarkAsRead(item.id)}
+                    style={styles.actionButton}
+                  >
+                    <Text style={styles.actionText}>✓</Text>
+                  </Pressable>
+                )}
                 <Pressable
-                  onPress={() => handleMarkAsRead(item.id)}
-                  style={styles.actionButton}
+                  onPress={() => handleDelete(item.id)}
+                  style={styles.deleteButton}
                 >
-                  <Text style={styles.actionText}>✓</Text>
+                  <Text style={styles.deleteText}>✕</Text>
                 </Pressable>
-              )}
-              <Pressable
-                onPress={() => handleDelete(item.id)}
-                style={styles.deleteButton}
-              >
-                <Text style={styles.deleteText}>✕</Text>
-              </Pressable>
+              </View>
             </View>
-          </View>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>📭 Sin notificaciones</Text>
-            <Text style={styles.emptyText}>
-              Aquí aparecerán tus notificaciones
-            </Text>
-          </View>
-        }
-        contentContainerStyle={styles.listContainer}
-        scrollEnabled={true}
-      />
+          )}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyTitle}>📭 Sin notificaciones</Text>
+              <Text style={styles.emptyText}>
+                Aquí aparecerán tus notificaciones
+              </Text>
+            </View>
+          }
+          contentContainerStyle={styles.listContainer}
+          scrollEnabled={true}
+        />
       )}
     </SafeAreaView>
   );

@@ -49,7 +49,7 @@ export class TransactionController {
       // Crear notificación automática
       const tipoNotif = tipo === 'ingreso' ? 'ingreso' : 'gasto';
       const titulo = tipo === 'ingreso' ? '✅ Ingreso registrado' : '📊 Gasto registrado';
-      const contenido = tipo === 'ingreso' 
+      const contenido = tipo === 'ingreso'
         ? `Se registró un ingreso de $${monto} (${descripcion})`
         : `Se registró un gasto de $${monto} (${categoria})`;
 
@@ -111,7 +111,7 @@ export class TransactionController {
       // Crear notificación automática en web
       const tipoNotif = tipo === 'ingreso' ? 'ingreso' : 'gasto';
       const titulo = tipo === 'ingreso' ? '✅ Ingreso registrado' : '📊 Gasto registrado';
-      const contenido = tipo === 'ingreso' 
+      const contenido = tipo === 'ingreso'
         ? `Se registró un ingreso de $${monto} (${descripcion})`
         : `Se registró un gasto de $${monto} (${categoria})`;
 
@@ -142,9 +142,9 @@ export class TransactionController {
     try {
       const notificacionesJSON = localStorage.getItem('notificaciones');
       const notificaciones = notificacionesJSON ? JSON.parse(notificacionesJSON) : [];
-      
+
       const nuevoId = notificaciones.length > 0 ? Math.max(...notificaciones.map(n => n.id)) + 1 : 1;
-      
+
       const nuevaNotificacion = {
         id: nuevoId,
         userId,
@@ -154,7 +154,7 @@ export class TransactionController {
         fechaCreacion: new Date().toISOString(),
         leida: 0
       };
-      
+
       notificaciones.push(nuevaNotificacion);
       localStorage.setItem('notificaciones', JSON.stringify(notificaciones));
     } catch (error) {
